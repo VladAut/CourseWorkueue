@@ -3,17 +3,61 @@
 
 #include <iostream>
 #include <fstream>
+#include <cstring>
 using namespace std;
+// Структура "автомобиль"
 struct Auto
 {
-    string mark, comfortability;
+    // Поля марки и комфортности авто
+    char mark[20], comfortability[18];
+    // Поля цены и расхода топлива на 100 км
     double price, fconsumption;    
+    // Поле надёжности авто, измеряемое количеством лет
     int reliability;   
+    // Указатели на предыдущую и на следующую машину в списке 
+    Auto* prev, * next;
 };
+// Структура для динамического списка
+struct List
+{
+    // Указатели на первый и крайний элементы списка
+    Auto* head, * tail;
+    // Конструктор спискаe
+    List()
+    {
+        this->head = this->tail = NULL;
+    }
+    // Функция добавления новой машины
+    Auto* addAuto(Auto data) 
+    {
+        // Выделяем место в памяти под новую машину и записываем в указатель (ptr)
+        Auto* ptr = (Auto*)malloc(sizeof(Auto));
+        //Записываем данные        
+        strcmp(ptr->mark, data.mark);
+        strcmp(ptr->comfortability, data.comfortability);
+        ptr->price = data.price;
+        ptr->fconsumption = data.fconsumption;
+        ptr->reliability = data.reliability;
+        // Помещаем в указатель на предыдущюу машину указатель на крайний элемент списка 
+        ptr->prev = tail;
+        // Если в списке есть крайний элемент
+        if (tail != NULL)
+            // То указываем что следующий для него элемент — это новая машина (указатель на новую машину(ptr))
+            tail->next = ptr;
+        if (head == NULL)
+            head = ptr;
+        tail = ptr;
+
+        return ptr;
+    }
+};
+
 
 int main()
 {
+    int a, b;
     cout << "Hello World!\n";
+
 }
 
 // Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"
