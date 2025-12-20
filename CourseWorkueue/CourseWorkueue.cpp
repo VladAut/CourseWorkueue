@@ -162,6 +162,7 @@ struct Node
 // Структура для динамического списка
 class List
 {
+public:
 	// Переменная для хранения кол-ва записей в списке
 	int count = 0;
 	// Указатели на первый и крайний элементы списка
@@ -420,7 +421,120 @@ class List
 		free(temp);
 	}
 };
-
+//Поиск по марке автомобиля
+List search(List& list, string s)
+{
+	// Инициализируем список для вывода результатов поиска
+	List result;
+	int i = 0;
+	// Поэлементно проходим список
+	for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
+	{
+		// Сравниваем результаты выполнения функции поиска из библиотеки для работы со строками
+		if (((((string)(ptr->data.mark))).find(s) != string::npos))
+		{
+			result.push_back(list[i]->data);
+		}
+		i++;
+	}
+	return result;
+}
+//Фильтр по комфортности автомобиля
+List search(List& list, int flag)
+{
+	// Инициализируем список для вывода результатов поиска
+	List result;
+	int i = 0;
+	// Выбираем по какой степени комфортности фильтровать
+	switch (flag)
+	{
+		// Отличная		(49 = 1)
+	case 49:
+	{
+		// Поэлементно проходим список
+		for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
+		{
+			// Сравниваем результаты выполнения функции поиска из библиотеки для работы со строками
+			if (((((string)(ptr->data.mark))).find("Отличная") != string::npos))
+			{
+				result.push_back(list[i]->data);
+			}
+			i++;
+		}
+		break;
+	}
+		// Хорошая		(50 = 2)
+	case 50:
+	{
+		// Поэлементно проходим список
+		for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
+		{
+			// Сравниваем результаты выполнения функции поиска из библиотеки для работы со строками
+			if (((((string)(ptr->data.mark))).find("Хорошая") != string::npos))
+			{
+				result.push_back(list[i]->data);
+			}
+			i++;
+		}
+		break;
+	}
+		// Удовлетворительная		(51 = 3)
+	case 51:
+	{
+		// Поэлементно проходим список
+		for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
+		{
+			// Сравниваем результаты выполнения функции поиска из библиотеки для работы со строками
+			if (((((string)(ptr->data.mark))).find("Удовлетворительная") != string::npos))
+			{
+				result.push_back(list[i]->data);
+			}
+			i++;
+		}
+		break;
+	}
+	}	
+	return result;
+}
+// Поиск по численным полям
+List search(List& list, float input)
+{
+	// Инициализируем список для вывода результатов поиска
+	List result;
+	int i = 0;
+	// Поэлементно проходим список
+	for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
+	{
+		// Сравниваем данные текущего элемента с введёнными
+		if ((ptr->data.fconsumption) == input || ptr->data.price== input || ptr->data.reliability== input)
+		{
+			result.push_back(list[i]->data);
+		}
+		i++;
+	}
+	return result;
+}
+// Фильтр по числовым полям
+List filter(List& list, bool(*func)(Node*, Node*), float item)
+{
+	// Инициализируем список для вывода результатов поиска
+	List result;
+	int i = 0;
+	Node* temp = (Node*)(malloc(sizeof(Node)));
+	temp->data = { NULL,NULL, item,item,item };
+	// Поэлементно проходим список
+	for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
+	{
+		// Для сравнения с искомыми данными используем функции сравнения определённых полей
+		if (func(ptr, temp))
+		{
+			result.push_back(list[i]->data);
+		}
+		i++;
+	}
+	free(temp);
+	return result;
+}
 
 int main()
 {
