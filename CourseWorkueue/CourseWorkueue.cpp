@@ -13,7 +13,7 @@ using namespace std;
 struct Auto
 {
 	// Поля марки и комфортности авто
-	char* mark, *comfortability;
+	char* mark, * comfortability;
 	// Поля цены и расхода топлива на 100 км
 	double price, fconsumption;
 	// Поле надёжности авто, измеряемое количеством лет
@@ -124,7 +124,7 @@ struct Auto
 				cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
 			}
 		}
-		cin.clear();	
+		cin.clear();
 	}
 	// Конструктор по умолчанию
 	Auto()
@@ -157,7 +157,7 @@ struct Node
 	{
 		this->data = data;
 		this->prev = this->next = NULL;
-	}		
+	}
 };
 // Структура для динамического списка
 class List
@@ -174,7 +174,7 @@ public:
 	}
 	// Функция добавления нового элемента в начало списка
 	Node* push_front(Auto data)
-	{						
+	{
 		// Выделяем место в памяти под новый элемент и записываем в указатель (ptr)
 		Node* ptr = (Node*)malloc(sizeof(Node));
 		//Записываем данные        
@@ -311,7 +311,7 @@ public:
 		cout << "Надёжность";
 		cout.width(15);
 		cout.fill(' ');
-		cout << "Расход топлива";	
+		cout << "Расход топлива";
 		cout.width(15);
 		cout.fill(' ');
 		cout << "Стоимость" << "\n";
@@ -322,19 +322,19 @@ public:
 			cout.fill(' ');
 			cout << i << ')';
 			cout.width(20);
-			cout.fill(' ');			
+			cout.fill(' ');
 			cout << ptr->data.mark;
 			cout.width(18);
-			cout.fill(' ');			
+			cout.fill(' ');
 			cout << ptr->data.comfortability;
 			cout.width(10);
-			cout.fill(' ');			
+			cout.fill(' ');
 			cout << ptr->data.reliability;
 			cout.width(15);
-			cout.fill(' ');			
-			cout << ptr->data.fconsumption;			
+			cout.fill(' ');
+			cout << ptr->data.fconsumption;
 			cout.width(15);
-			cout.fill(' ');			
+			cout.fill(' ');
 			cout << fixed << setprecision(2) << ptr->data.price << "\n";
 			i++;
 		}
@@ -376,7 +376,7 @@ public:
 		return ptr;
 	}
 	// Получение элемента списка по индексу через оператор []
-	Node* operator [] (int index) 
+	Node* operator [] (int index)
 	{
 		return getAt(index);
 	}
@@ -398,7 +398,7 @@ public:
 		// Выделяем память под новый элемент и записываем указатель на эту память
 		Node* ptr = (Node*)malloc(sizeof(Node));
 		// Передаём данные в новую запись
-		ptr->data = data;		
+		ptr->data = data;
 		// Меняем местами указатели
 		ptr->prev = left;
 		ptr->next = right;
@@ -415,7 +415,7 @@ public:
 		// Передаём в него данные
 		temp->data = first->data;
 		// Меняем их местави
-		first->data = second->data;	
+		first->data = second->data;
 		second->data = temp->data;
 		// Освобождаем ранее выделенную память
 		free(temp);
@@ -463,7 +463,7 @@ List search(List& list, int flag)
 		}
 		break;
 	}
-		// Хорошая		(50 = 2)
+	// Хорошая		(50 = 2)
 	case 50:
 	{
 		// Поэлементно проходим список
@@ -478,7 +478,7 @@ List search(List& list, int flag)
 		}
 		break;
 	}
-		// Удовлетворительная		(51 = 3)
+	// Удовлетворительная		(51 = 3)
 	case 51:
 	{
 		// Поэлементно проходим список
@@ -493,7 +493,7 @@ List search(List& list, int flag)
 		}
 		break;
 	}
-	}	
+	}
 	return result;
 }
 // Поиск по численным полям
@@ -506,7 +506,7 @@ List search(List& list, float input)
 	for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
 	{
 		// Сравниваем данные текущего элемента с введёнными
-		if ((ptr->data.fconsumption) == input || ptr->data.price== input || ptr->data.reliability== input)
+		if ((ptr->data.fconsumption) == input || ptr->data.price == input || ptr->data.reliability == input)
 		{
 			result.push_back(list[i]->data);
 		}
@@ -535,12 +535,756 @@ List filter(List& list, bool(*func)(Node*, Node*), float item)
 	free(temp);
 	return result;
 }
+//Чтение структуры из файла
+void readStruct(List& list)
+{
+	Node* car = (Node*)malloc(sizeof(Node));
+	// Переменная для работы с файлом
+	FILE* file;
+	// Переменная для обозначения конца файла
+	long i = 0, fEnd;
+	// Открываем бинарный файл для чтения 							
+	if (file = fopen("data.bin", "rb"))
+	{
+		// Перемещаем курсор в конец файла.
+		fseek(file, 0, SEEK_END);
+		// Функция выдаст конечное положнние курсора относительно начала файла в байтах.				
+		fEnd = ftell(file);
+		while (i < fEnd)
+		{
+			// Перемещаемся от начала (SEEK_SET) файла на i длинн структуры
+			fseek(file, i, SEEK_SET);
+			// Считываем из файла 1 структуру размера Auto			
+			fread(car, sizeof(Auto), 1, file);
+			// Добавляем в список прочитанную структуру
+			list.push_back(*Auto);
+			i += sizeof(Auto);
+		}
+		// Закрываем файл
+		fclose(file);
+		free(car);
+	}
+}
+//Запись структуры в файл
+void writeStruct(List list)
+{
+	// Переменная для работы с файлом
+	FILE* f;
+	f = fopen("data.bin", "wb");
+	for (Auto* ptr = list.head; ptr != NULL; ptr = ptr->next)
+	{
+		// Записываем в файл		
+		fwrite(ptr, sizeof(Auto), 1, f);
+	}
+	// Закрываем файл						
+	fclose(f);
+}
+// Сравнение определённых полей структуры для сортровки по возрастанию
+bool AscByMark(Auto* a, Auto* b)
+{
+	if (strcmp(a->mark, b->mark) <= 0)
+		return true;
+	else
+		return false;
+}
+bool AscByComfort(Auto* a, Auto* b)
+{
+	if (strcmp(a->comfortability, b->comfortability) <= 0)
+		return true;
+	else
+		return false;
+}
+bool AscByFuel(Auto* a, Auto* b)
+{
+	return a->fconsumption <= b->fconsumption;
+}
+bool AscByPrice(Auto* a, Auto* b)
+{
+	return a->price <= b->price;
+}
+bool AscByReliability(Auto* a, Auto* b)
+{
+	return a->reliability <= b->reliability;
+}
+// Сравнение определённых полей структуры для сортровки по убыванию
+bool DescByMark(Auto* a, Auto* b)
+{
+	if (strcmp(a->mark, b->mark) >= 0)
+		return true;
+	else
+		return false;
+}
+bool DescByComfort(Auto* a, Auto* b)
+{
+	if (strcmp(a->comfortability, b->comfortability) >= 0)
+		return true;
+	else
+		return false;
+}
+bool DescByFuel(Auto* a, Auto* b)
+{
+	return a->fconsumption >= b->fconsumption;
+}
+bool DescByPrice(Auto* a, Auto* b)
+{
+	return a->price >= b->price;
+}
+bool DescByReliability(Auto* a, Auto* b)
+{
+	return a->reliability >= b->reliability;
+}
+// Функция сортировки элементов до обозначенного
+int partition(List list, int first, int last, bool(*func)(Node*, Node*))
+{
+	// Выбираем крайнюю запись в качестве опорной точки
+	Node* pivot = list[last];
 
+	// Переменная для наибольшего элемента
+	int i = (first - 1);
+
+	// Проходим записи списка
+	// Сравнимаем при помощи функций с крайней записью
+	for (int j = first; j < last; j++)
+	{
+		if (func(list[j], pivot))
+		{
+
+			// Если найден элемент меньше
+			// То меняем его с наибольшим, записанным в i
+			i++;
+
+			// Меняем записи по индексам i и j местами
+			list.swap(list[i], list[j]);
+		}
+	}
+
+	// Меняем точку опоры с наибольшим элементом в i
+	list.swap(list[i + 1], list[last]);
+
+	// Возвращаем точку раздела
+	return (i + 1);
+}
+// Функция сортировки
+void quickSort(List& list, int first, int last, bool(*func)(Node*, Node*))
+{
+	// Проверка на заполненность списка
+	if (first < last)
+	{
+		// pi это точка разделения списка		
+		int pi = partition(list, first, last, func);
+
+		// Отдельно сортируем элементы до и после
+		// разделителя pi
+		quickSort(list, first, pi - 1, func);
+		quickSort(list, pi + 1, last, func);
+	}
+}
 int main()
 {
-	int a, b;
-	cout << "Hello World!\n";
+	// Инициализируем список
+	List list;
+	// Инициализируем переменную для переходов по меню
+	int menu;
+	menu = NULL;
+	// Инициализируем переменную для записи компьютеров
+	Auto car;
+	// Попытка считать данные с файла
+	readStruct(list);
+	// Цикл для меню
+	while (menu != 27)
+	{
+		// Проверка на существование записей в списке
+		if (list.count == 0)
+		{
+			while (true)
+			{
+				cout << "\033[2J\033[1;1H";
+				cout << "База данных не найдена!\n\n";
+				cout << "1.Добавить машину\n";
+				cout << "2.Выйти\n";
+				menu = _getch();
+				if (menu == 50)
+				{
+					exit(0);
+				}
+				else if (menu == 49)
+				{
+					menu = 50;
+					break;
+				}
+			}
+		}
+		if (menu != 50)
+		{
+			// Выводим главное меню
+			cout << "\033[2J\033[1;1H"; // Очистка консоли
+			cout << "Выберите действие!\n\n";
+			cout << "1.Список машин\n";
+			cout << "2.Добавить\n";
+			cout << "3.Изменить\n";
+			cout << "4.Удалить\n";
+			cout << "5.Вывести перечень авто согласно требованиям\n\n";
+			cout << "Нажмите Esc чтобы сохранить и выйти\n";
+			// Считываем нажатую клавишу
+			menu = _getch();
+		}
+		switch (menu)
+		{
+			// SHOW LIST			
+		case 49:
+		{
 
+			while (menu != 2)
+			{
+				menu = NULL;
+				cout << "\033[2J\033[1;1H"; // Очистка консоли
+				list.Show();
+				cout << '\n';
+				cout << "Выберите действие!\n\n";
+				cout << "1.Поиск\n";
+				cout << "2.Сортировка\n";
+				cout << "3.Фильтр\n";
+				switch (menu = _getch())
+				{
+					// SEARCH
+				case 49:
+				{
+					menu = NULL;
+					cout << "\033[2J\033[1;1H"; // Очистка консоли					
+					cout << "Выберите действие!\n\n";
+					cout << "1. Искать по марке/комфортности\n";
+					cout << "2. Искать по характеристикам\n";
+					switch (_getch())
+					{
+						// Поиск по тексту
+					case 49:
+					{
+						string s;
+						// Очистка консоли									
+						cout << "\033[2J\033[1;1H";
+						cout << "Введите искомое значение: ";
+						cin >> s;
+						List result = search(list, s);
+						if (result.count != 0)
+							result.Show();
+						else
+						{
+							cout << "\033[2J\033[1;1H";
+							cout << "Таких машин не найдено!\n\n";
+						}
+						_getch();
+						result.ClearList();
+					}
+					break;
+					// Поиск по числам
+					case 50:
+					{
+						List result;
+						float s;
+						cout << "\033[2J\033[1;1H";
+						cout << "Введите искомое значение: ";
+						if (cin >> s)
+							result = search(list, s);
+						if (result.count != 0)
+							result.Show();
+						else
+						{
+							cout << "\033[2J\033[1;1H";
+							cout << "Машин с такими характеристиками не найдено\n\n";
+						}
+						_getch();
+						result.ClearList();
+					}
+					break;
+					}
+					break;
+				}
+				// SORT
+				case 50:
+				{
+					menu = NULL;
+					// Флаг для определения в каком порядке сортировать
+					int flag = 0;
+					while (menu != 1)
+					{
+						list.Show();
+						cout << '\n';
+						cout << "Сортировать по ...\n\n";
+						cout << "1.Марке\n";
+						cout << "2.Комфортности\n";
+						cout << "3.Расходу топлива\n";
+						cout << "4.Надёжности\n";
+						cout << "5.Цене\n";
+						switch (menu = _getch())
+						{
+							// сортировка по марке
+						case 49:
+						{
+							menu = NULL;
+							if (flag == 0)
+							{
+								quickSort(list, 0, list.count - 1, AscByMark);
+								flag++;
+							}
+							else
+							{
+								quickSort(list, 0, list.count - 1, DescByMark);
+								flag = 0;
+							}
+							break;
+						}
+						// сортировка по комфортности
+						case 50:
+						{
+
+							menu = NULL;
+							if (flag == 0)
+							{
+								quickSort(list, 0, list.count - 1, AscByComfort);
+								flag++;
+							}
+							else
+							{
+								quickSort(list, 0, list.count - 1, DescByComfort);
+								flag = 0;
+							}
+							break;
+						}
+						// сортировка по расходу топлива
+						case 51:
+						{
+
+							menu = NULL;
+							if (flag == 0)
+							{
+								quickSort(list, 0, list.count - 1, AscByFuel);
+								flag++;
+							}
+							else
+							{
+								quickSort(list, 0, list.count - 1, DescByFuel);
+								flag = 0;
+							}
+							break;
+						}
+						// сортировка по надёжности
+						case 52:
+						{
+
+							menu = NULL;
+							if (flag == 0)
+							{
+								quickSort(list, 0, list.count - 1, AscByReliability);
+								flag++;
+							}
+							else
+							{
+								quickSort(list, 0, list.count - 1, DescByReliability);
+								flag = 0;
+							}
+							break;
+						}
+						// сортировка по цене
+						case 53:
+						{
+
+							menu = NULL;
+							if (flag == 0)
+							{
+								quickSort(list, 0, list.count - 1, AscByPrice);
+								flag++;
+							}
+							else
+							{
+								quickSort(list, 0, list.count - 1, DescByPrice);
+								flag = 0;
+							}
+							break;
+						}
+						// Выход в предыдущее меню (27 — Esc)
+						case 27:
+							menu = 1;
+							break;
+						}
+					}
+					break;
+				}
+				// FILTER
+				case 51:
+				{
+					menu = NULL;
+					List result;
+					result.ClearList();
+					result = list;
+					while (menu != 1)
+					{
+						result.Show();
+						cout << '\n';
+						cout << "Фильтровать по ...\n\n";
+						cout << "1.Марке/Комфортности\n";
+						cout << "2.Расходу топлива\n";
+						cout << "3.Надёжности\n";
+						cout << "4.Цене\n";
+						switch (menu = _getch())
+						{
+							// фильтр по текстовым полям
+						case 49:
+						{
+							string input;
+							result.Show();
+							cout << '\n';
+							cout << "Введите текст:\n\n";
+							cin >> input;
+							result = search(result, input);
+							if (result.count != 0)
+								menu = NULL;
+							else
+							{
+								cout << "\033[2J\033[1;1H";
+								cout << "Машины не найдены!\n\n";
+								_getch();
+								menu = 1;
+							}
+							break;
+						}
+						// фильтр по расходу топлива
+						case 50:
+						{
+							while (menu != 2)
+							{
+								float input = NULL;
+								result.Show();
+								cout << '\n';
+								cout << "Расход топлива на 100 км должен быть:\n\n";
+								cout << "1.Меньше чем:\n";
+								cout << "2.Больше чем:\n";
+								switch (_getch())
+								{
+								case 49:
+								{
+									result.Show();
+									cout << '\n';
+									cout << "Расход топлива на 100 км должен быть:\n\n";
+									cout << "Меньше чем: ";
+									if (cin >> input)
+										result = filter(result, AscByFuel, input);
+									else
+									{
+										cout << "\033[2J\033[1;1H";
+										cout << "Машины не найдены!\n\n";
+										_getch();
+										menu = 1;
+									}
+									if (result.count != 0)
+										menu = NULL;
+									else
+									{
+										cout << "\033[2J\033[1;1H";
+										cout << "Машины не найдены!\n\n";
+										_getch();
+										menu = 1;
+									}
+								}
+								break;
+								case 50:
+								{
+									result.Show();
+									cout << '\n';
+									cout << "Расход топлива на 100 км должен быть:\n\n";
+									cout << "Больше чем: ";
+									if (cin >> input)
+										result = filter(result, DescByFuel, input);
+									else
+									{
+										cout << "\033[2J\033[1;1H";
+										cout << "Машины не найдены!\n\n";
+										_getch();
+										menu = 1;
+									}
+									if (result.count != 0)
+										menu = NULL;
+									else
+									{
+										cout << "\033[2J\033[1;1H";
+										cout << "Машины не найдены!\n\n";
+										_getch();
+										menu = 1;
+									}
+								}
+								break;
+								// Выход в предыдущее меню (27 — Esc)
+								case 27:
+								{
+									menu = 2;
+									break;
+								}
+								}
+								cin.clear();
+								cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
+								if (menu == 1)
+									break;
+							}
+						}
+						// filter by reliability
+						case 51:
+						{
+							while (menu != 2)
+							{
+								float input = NULL;
+								result.Show();
+								cout << '\n';
+								cout << "Надёжность должна быть\n\n";
+								cout << "1.Меньше чем:\n";
+								cout << "2.Больше чем:\n";
+								switch (_getch())
+								{
+								case 49:
+								{
+									result.Show();
+									cout << '\n';
+									cout << "Надёжность должна быть:\n\n";
+									cout << "Меньше чем: ";
+									if (cin >> input)
+										result = filter(result, AscByReliability, input);
+									else
+									{
+										cout << "\033[2J\033[1;1H";
+										cout << "Машины не найдены!\n\n";
+										_getch();
+										menu = 1;
+									}
+									if (result.count != 0)
+										menu = NULL;
+									else
+									{
+										cout << "\033[2J\033[1;1H";
+										cout << "Машины не найдены!\n\n";
+										_getch();
+										menu = 1;
+									}
+								}
+								break;
+								case 50:
+								{
+									result.Show();
+									cout << '\n';
+									cout << "Надёжность должна быть:\n\n";
+									cout << "Больше чем: ";
+									if (cin >> input)
+										result = filter(result, DescByReliability, input);
+									else
+									{
+										cout << "\033[2J\033[1;1H";
+										cout << "Машины не найдены!\n\n";
+										_getch();
+										menu = 1;
+									}
+									if (result.count != 0)
+										menu = NULL;
+									else
+									{
+										cout << "\033[2J\033[1;1H";
+										cout << "Машины не найдены!\n\n";
+										_getch();
+										menu = 1;
+									}
+								}
+								break;
+								case 27:
+								{
+									menu = 2;
+									break;
+								}
+								}
+								cin.clear();
+								cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
+								if (menu == 1)
+									break;
+							}
+						}
+						// filter by Price
+						case 53:
+						{
+							while (menu != 2)
+							{
+								float input = NULL;
+								result.Show();
+								cout << '\n';
+								cout << "Стоимость авто должна быть:\n\n";
+								cout << "1. Меньше чем:\n";
+								cout << "2. Больше чем:\n";
+								switch (_getch())
+								{
+								case 49:
+								{
+									result.Show();
+									cout << '\n';
+									cout << "Стоимость авто должна быть:\n\n";
+									cout << "Меньше чем: ";
+									if (cin >> input)
+										result = filter(result, AscByPrice, input);
+									else
+									{
+										cout << "\033[2J\033[1;1H";
+										cout << "Машины не найдены!\n\n";
+										_getch();
+										menu = 1;
+									}
+									if (result.count != 0)
+										menu = NULL;
+									else
+									{
+										cout << "\033[2J\033[1;1H";
+										cout << "Машины не найдены!\n\n";
+										_getch();
+										menu = 1;
+									}
+								}
+								break;
+								case 50:
+								{
+									result.Show();
+									cout << '\n';
+									cout << "Стоимость авто должна быть:\n\n";
+									cout << "Больше чем: ";
+									if (cin >> input)
+										result = filter(result, DescByPrice, input);
+									else
+									{
+										cout << "\033[2J\033[1;1H";
+										cout << "Машины не найдены!\n\n";
+										_getch();
+										menu = 1;
+									}
+									if (result.count != 0)
+										menu = NULL;
+									else
+									{
+										cout << "\033[2J\033[1;1H";
+										cout << "Машины не найдены!\n\n";
+										_getch();
+										menu = 1;
+									}
+								}
+								break;
+								case 27:
+								{
+									menu = 2;
+									break;
+								}
+								}
+								cin.clear();
+								cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
+								if (menu == 1)
+									break;
+							}
+						}
+						// Выход в предыдущее меню (27 — Esc)
+						case 27:
+						{
+							menu = 1;
+							break;
+						}
+						}
+					}
+					break;
+				}
+				// Выход в предыдущее меню (27 — Esc)
+				case 27:
+				{
+					menu = 2;
+					break;
+				}
+				}
+			}
+			break;
+		}
+		// ADD
+		case 50:
+		{
+			// Вызываем функцию добавления и вручную вводим все данные
+			car.CompInput();
+			// Записанный пк добавляем в список
+			list.push_back(car);
+			// Возвращаемся в главное меню
+			menu = 2;
+			break;
+		}
+		// EDIT
+		case 51:
+		{
+			menu = NULL;
+			// Цикл для проверки ввода
+			while (true)
+			{
+				list.Show();
+				cout << "Введите порядковый номер записи, которую вы хотите изменить:\n";
+				// Проверка на корректность введённых данных
+				if (cin >> menu && menu <= list.count && menu > 0)
+					break;
+				else
+				{
+					cout << "\033[2J\033[1;1H" << "Неккоректные данные! Введите снова";
+					_getch();
+					cin.clear();
+					cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
+				}
+			}
+			// Вводим новые данные для выбранной записи
+			car.CompInput();
+			// Удаляем выбранную запись
+			list.erase(menu - 1);
+			// Вставляем на её место новую
+			list.insert(menu - 1, car);
+			menu = NULL;
+			cout << "Для продолжения нажмите любуе клавишу";
+			_getch();
+			break;
+		}
+		// DELETE
+		case 52:
+		{
+			menu = NULL;
+			// Цикл для проверки вводимых значений
+			while (true)
+			{
+				list.Show();
+				cout << "Введите порядковый номер записи, которую вы хотите удалить:\n";
+				if ((cin >> menu && menu <= list.count && menu > 0))
+				{
+					break;
+				}
+				else
+				{
+					cout << "\033[2J\033[1;1H" << "Неккоректные данные! Введите снова";
+					_getch();
+					cin.clear();
+					cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
+				}
+			}
+			if (menu != 27)
+			{
+				list.erase(menu - 1);
+				menu = NULL;
+				cout << "\033[2J\033[1;1H"; // Очистка консоли
+				cout << "Для продолжения нажмите любуе клавишу";
+				_getch();
+			}
+			break;
+		}
+		}
+	// Выход из приложения (27 — Esc)
+	case 27:
+	{
+		// Сохранение внесённых изменений (запись текущего списка в файл)
+		writeStruct(list);
+		// Очистка списка
+		list.ClearList();
+		exit(0);
+		break;
+	}
+	}
+}
 }
 
 // Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"
