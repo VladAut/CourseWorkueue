@@ -515,13 +515,13 @@ List search(List& list, float input)
 	return result;
 }
 // Фильтр по числовым полям
-List filter(List& list, bool(*func)(Node*, Node*), float item)
+List filter(List& list, bool(*func)(Node*, Node*), double item)
 {
 	// Инициализируем список для вывода результатов поиска
 	List result;
 	int i = 0;
 	Node* temp = (Node*)(malloc(sizeof(Node)));
-	temp->data = { NULL,NULL, item,item,item };
+	temp->data = { NULL,NULL, item,item,(int)item };
 	// Поэлементно проходим список
 	for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
 	{
@@ -544,7 +544,7 @@ void readStruct(List& list)
 	// Переменная для обозначения конца файла
 	long i = 0, fEnd;
 	// Открываем бинарный файл для чтения 							
-	if (file = fopen("data.bin", "rb"))
+	if (fopen_s(&file, "data.bin", "rb"))
 	{
 		// Перемещаем курсор в конец файла.
 		fseek(file, 0, SEEK_END);
@@ -557,7 +557,7 @@ void readStruct(List& list)
 			// Считываем из файла 1 структуру размера Auto			
 			fread(car, sizeof(Auto), 1, file);
 			// Добавляем в список прочитанную структуру
-			list.push_back(*Auto);
+			list.push_back(car->data);
 			i += sizeof(Auto);
 		}
 		// Закрываем файл
@@ -570,8 +570,8 @@ void writeStruct(List list)
 {
 	// Переменная для работы с файлом
 	FILE* f;
-	f = fopen("data.bin", "wb");
-	for (Auto* ptr = list.head; ptr != NULL; ptr = ptr->next)
+	fopen_s(&f, "data.bin", "wb");
+	for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
 	{
 		// Записываем в файл		
 		fwrite(ptr, sizeof(Auto), 1, f);
@@ -580,58 +580,58 @@ void writeStruct(List list)
 	fclose(f);
 }
 // Сравнение определённых полей структуры для сортровки по возрастанию
-bool AscByMark(Auto* a, Auto* b)
+bool AscByMark(Node* a, Node* b)
 {
-	if (strcmp(a->mark, b->mark) <= 0)
+	if (strcmp(a->data.mark, b->data.mark) <= 0)
 		return true;
 	else
 		return false;
 }
-bool AscByComfort(Auto* a, Auto* b)
+bool AscByComfort(Node* a, Node* b)
 {
-	if (strcmp(a->comfortability, b->comfortability) <= 0)
+	if (strcmp(a->data.comfortability, b->data.comfortability) <= 0)
 		return true;
 	else
 		return false;
 }
-bool AscByFuel(Auto* a, Auto* b)
+bool AscByFuel(Node* a, Node* b)
 {
-	return a->fconsumption <= b->fconsumption;
+	return a->data.fconsumption <= b->data.fconsumption;
 }
-bool AscByPrice(Auto* a, Auto* b)
+bool AscByPrice(Node* a, Node* b)
 {
-	return a->price <= b->price;
+	return a->data.price <= b->data.price;
 }
-bool AscByReliability(Auto* a, Auto* b)
+bool AscByReliability(Node* a, Node* b)
 {
-	return a->reliability <= b->reliability;
+	return a->data.reliability <= b->data.reliability;
 }
 // Сравнение определённых полей структуры для сортровки по убыванию
-bool DescByMark(Auto* a, Auto* b)
+bool DescByMark(Node* a, Node* b)
 {
-	if (strcmp(a->mark, b->mark) >= 0)
+	if (strcmp(a->data.mark, b->data.mark) >= 0)
 		return true;
 	else
 		return false;
 }
-bool DescByComfort(Auto* a, Auto* b)
+bool DescByComfort(Node* a, Node* b)
 {
-	if (strcmp(a->comfortability, b->comfortability) >= 0)
+	if (strcmp(a->data.comfortability, b->data.comfortability) >= 0)
 		return true;
 	else
 		return false;
 }
-bool DescByFuel(Auto* a, Auto* b)
+bool DescByFuel(Node* a, Node* b)
 {
-	return a->fconsumption >= b->fconsumption;
+	return a->data.fconsumption >= b->data.fconsumption;
 }
-bool DescByPrice(Auto* a, Auto* b)
+bool DescByPrice(Node* a, Node* b)
 {
-	return a->price >= b->price;
+	return a->data.price >= b->data.price;
 }
-bool DescByReliability(Auto* a, Auto* b)
+bool DescByReliability(Node* a, Node* b)
 {
-	return a->reliability >= b->reliability;
+	return a->data.reliability >= b->data.reliability;
 }
 // Функция сортировки элементов до обозначенного
 int partition(List list, int first, int last, bool(*func)(Node*, Node*))
@@ -1203,7 +1203,7 @@ int main()
 		case 50:
 		{
 			// Вызываем функцию добавления и вручную вводим все данные
-			car.CompInput();
+			car.AutoInput();
 			// Записанный пк добавляем в список
 			list.push_back(car);
 			// Возвращаемся в главное меню
@@ -1231,7 +1231,7 @@ int main()
 				}
 			}
 			// Вводим новые данные для выбранной записи
-			car.CompInput();
+			car.AutoInput();
 			// Удаляем выбранную запись
 			list.erase(menu - 1);
 			// Вставляем на её место новую
@@ -1272,20 +1272,20 @@ int main()
 			}
 			break;
 		}
+		// Выход из приложения (27 — Esc)
+		case 27:
+		{
+			// Сохранение внесённых изменений (запись текущего списка в файл)
+			writeStruct(list);
+			// Очистка списка
+			list.ClearList();
+			exit(0);
+			break;
 		}
-	// Выход из приложения (27 — Esc)
-	case 27:
-	{
-		// Сохранение внесённых изменений (запись текущего списка в файл)
-		writeStruct(list);
-		// Очистка списка
-		list.ClearList();
-		exit(0);
-		break;
-	}
+		}
 	}
 }
-}
+
 
 // Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"
 // Отладка программы: F5 или меню "Отладка" > "Запустить отладку"
