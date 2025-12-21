@@ -8,12 +8,13 @@
 #include <stdio.h> 
 #include <fstream> // For files
 #include <string>
+
 using namespace std;
 // Структура "автомобиль"
 struct Auto
 {
 	// Поля марки и комфортности авто
-	char* mark, * comfortability;
+	char mark[20], comfortability[18];
 	// Поля цены и расхода топлива на 100 км
 	double price, fconsumption;
 	// Поле надёжности авто, измеряемое количеством лет
@@ -86,24 +87,20 @@ struct Auto
 			cout << "1.Отличная\n";
 			cout << "2.Хорошая\n";
 			cout << "3.Удовлетворительная\n";
-			switch (_getch())
+			if (_getch() == 49)
 			{
-
-			case 49:
-			{
-				strcmp(this->comfortability, "Отличная");
+				strcpy_s(this->comfortability, "Отличная");
 				break;
 			}
-			case 50:
+			else if (_getch() == 50)
 			{
-				strcmp(this->comfortability, "Хорошая");
+				strcpy_s(this->comfortability, "Хорошая");
 				break;
 			}
-			case 51:
+			else if (_getch() == 51)
 			{
-				strcmp(this->comfortability, "Удовлетворительная");
-				break;
-			}
+				strcpy_s(this->comfortability, "Удовлетворительная");
+				break;			
 			}
 		}
 		cin.clear();
@@ -128,9 +125,7 @@ struct Auto
 	}
 	// Конструктор по умолчанию
 	Auto()
-	{
-		this->mark = NULL;
-		this->comfortability = NULL;
+	{		
 		this->price = NULL;
 		this->fconsumption = NULL;
 		this->reliability = NULL;
@@ -138,8 +133,8 @@ struct Auto
 	// Конструктор с переданными параметрами
 	Auto(char markNew[], char comfortabilityNew[], double priceNew, double fconsumptionNew, int reliabilityNew)
 	{
-		this->mark = markNew;
-		this->comfortability = comfortabilityNew;
+		strcpy_s(this->mark,markNew);
+		strcpy_s(this->comfortability, comfortabilityNew);
 		this->price = priceNew;
 		this->fconsumption = fconsumptionNew;
 		this->reliability = reliabilityNew;
@@ -150,7 +145,7 @@ struct Node
 {
 	// Поле с данными этого элемента (структура автомобиль)
 	Auto data;
-	// Указатели на предыдущий и на следующий элемент в списке 
+	// Указатели на предыдущий и на следующ ий элемент в списке 
 	Node* prev, * next;
 	// Конструктор элемента
 	Node(Auto data)
@@ -211,6 +206,8 @@ public:
 			head = ptr;
 		// Указываем что новый элемент является крайним в списке
 		tail = ptr;
+		// Увеличиваем счётчик кол-ва записей в списке
+		this->count++;
 		// Возвращаем указатель на новый элемент
 		return ptr;
 	}
@@ -544,7 +541,8 @@ void readStruct(List& list)
 	// Переменная для обозначения конца файла
 	long i = 0, fEnd;
 	// Открываем бинарный файл для чтения 							
-	if (fopen_s(&file, "data.bin", "rb"))
+	fopen_s(&file, "data.bin", "rb");
+	if (file != NULL)
 	{
 		// Перемещаем курсор в конец файла.
 		fseek(file, 0, SEEK_END);
@@ -582,14 +580,14 @@ void writeStruct(List list)
 // Сравнение определённых полей структуры для сортровки по возрастанию
 bool AscByMark(Node* a, Node* b)
 {
-	if (strcmp(a->data.mark, b->data.mark) <= 0)
+	if (strcpy_s(a->data.mark, b->data.mark) <= 0)
 		return true;
 	else
 		return false;
 }
 bool AscByComfort(Node* a, Node* b)
 {
-	if (strcmp(a->data.comfortability, b->data.comfortability) <= 0)
+	if (strcpy_s(a->data.comfortability, b->data.comfortability) <= 0)
 		return true;
 	else
 		return false;
@@ -609,14 +607,14 @@ bool AscByReliability(Node* a, Node* b)
 // Сравнение определённых полей структуры для сортровки по убыванию
 bool DescByMark(Node* a, Node* b)
 {
-	if (strcmp(a->data.mark, b->data.mark) >= 0)
+	if (strcpy_s(a->data.mark, b->data.mark) >= 0)
 		return true;
 	else
 		return false;
 }
 bool DescByComfort(Node* a, Node* b)
 {
-	if (strcmp(a->data.comfortability, b->data.comfortability) >= 0)
+	if (strcpy_s(a->data.comfortability, b->data.comfortability) >= 0)
 		return true;
 	else
 		return false;
@@ -681,6 +679,7 @@ void quickSort(List& list, int first, int last, bool(*func)(Node*, Node*))
 }
 int main()
 {
+	setlocale(LC_ALL, ".1251");
 	// Инициализируем список
 	List list;
 	// Инициализируем переменную для переходов по меню
