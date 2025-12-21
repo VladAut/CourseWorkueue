@@ -130,6 +130,12 @@ struct Auto
 		this->fconsumption = NULL;
 		this->reliability = NULL;
 	}
+	Auto(double priceNew, double fconsumptionNew, int reliabilityNew)
+	{		
+		this->price = priceNew;
+		this->fconsumption = fconsumptionNew;
+		this->reliability = reliabilityNew;
+	}
 	// Конструктор с переданными параметрами
 	Auto(char markNew[], char comfortabilityNew[], double priceNew, double fconsumptionNew, int reliabilityNew)
 	{
@@ -521,7 +527,7 @@ List filter(List& list, bool(*func)(Node*, Node*), double item)
 	List result;
 	int i = 0;
 	Node* temp = (Node*)(malloc(sizeof(Node)));
-	temp->data = { NULL,NULL, item,item,(int)item };
+	temp->data = { item,item,(int)item};
 	// Поэлементно проходим список
 	for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
 	{
