@@ -151,7 +151,8 @@ struct Node
 	Node(Auto data)
 	{
 		this->data = data;
-		this->prev = this->next = NULL;
+		this->prev = NULL;
+		this->next = NULL;
 	}
 };
 // Структура для динамического списка
@@ -165,7 +166,8 @@ public:
 	// Конструктор списка по умолчанию
 	List()
 	{
-		this->head = this->tail = NULL;
+		this->head = NULL;
+			this->tail = NULL;
 	}
 	// Функция добавления нового элемента в начало списка
 	Node* push_front(Auto data)
@@ -193,6 +195,7 @@ public:
 	{
 		// Выделяем место в памяти под новый элемент и записываем в указатель (ptr)
 		Node* ptr = (Node*)malloc(sizeof(Node));
+		ptr->next = NULL;
 		//Записываем данные        
 		ptr->data = data;
 		// Помещаем в указатель на предыдущий элемент указатель на крайний элемент списка 
