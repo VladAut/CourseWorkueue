@@ -8,6 +8,8 @@
 #include <stdio.h> 
 #include <fstream> // For files
 #include <string>
+#include <algorithm> // Для std::transform
+#include <cctype>    // Для std::tolower
 
 using namespace std;
 // Структура "автомобиль"
@@ -589,17 +591,19 @@ void writeStruct(List list)
 // Сравнение определённых полей структуры для сортровки по возрастанию
 bool AscByMark(Node* a, Node* b)
 {
-	if (strcpy_s(a->data.mark, b->data.mark) <= 0)
-		return true;
-	else
-		return false;
+	string strA = a->data.mark;
+	string strB = b->data.mark;
+	transform(strA.begin(), strA.end(), strA.begin(), tolower);
+	transform(strB.begin(), strB.end(), strB.begin(), tolower);
+	return strA < strB;
 }
 bool AscByComfort(Node* a, Node* b)
 {
-	if (strcpy_s(a->data.comfortability, b->data.comfortability) <= 0)
-		return true;
-	else
-		return false;
+	string strA = a->data.comfortability;
+	string strB = b->data.comfortability;
+	transform(strA.begin(), strA.end(), strA.begin(), tolower);
+	transform(strB.begin(), strB.end(), strB.begin(), tolower);
+	return strA < strB;
 }
 bool AscByFuel(Node* a, Node* b)
 {
@@ -616,17 +620,19 @@ bool AscByReliability(Node* a, Node* b)
 // Сравнение определённых полей структуры для сортровки по убыванию
 bool DescByMark(Node* a, Node* b)
 {
-	if (strcpy_s(a->data.mark, b->data.mark) >= 0)
-		return true;
-	else
-		return false;
+	string strA = a->data.mark;
+	string strB = b->data.mark;	
+	transform(strA.begin(), strA.end(), strA.begin(), tolower);
+	transform(strB.begin(), strB.end(), strB.begin(), tolower);
+	return strA > strB;
 }
 bool DescByComfort(Node* a, Node* b)
 {
-	if (strcpy_s(a->data.comfortability, b->data.comfortability) >= 0)
-		return true;
-	else
-		return false;
+	string strA = a->data.comfortability;
+	string strB = b->data.comfortability;
+	transform(strA.begin(), strA.end(), strA.begin(), tolower);
+	transform(strB.begin(), strB.end(), strB.begin(), tolower);
+	return strA > strB;
 }
 bool DescByFuel(Node* a, Node* b)
 {
