@@ -425,51 +425,37 @@ public:
 	//Вывод списка на экран	
 	void Show()
 	{
-		// Переменная для нумерации элементов
-		int i = 1;
 		// Очистка консоли
 		cout << "\033[2J\033[1;1H";
-		// Указание ширины выводимых данных
-		cout.width(4);
-		// Заполнение пустого места пробелами
-		cout.fill(' ');
-		cout << "#";
-		cout.width(20);
-		cout.fill(' ');
-		cout << "Марка автомобиля";
-		cout.width(18);
-		cout.fill(' ');
-		cout << "Комфортность";
-		cout.width(10);
-		cout.fill(' ');
-		cout << "Надёжность";
-		cout.width(15);
-		cout.fill(' ');
-		cout << "Расход топлива";
-		cout.width(15);
-		cout.fill(' ');
-		cout << "Стоимость" << "\n";
-		// Поэлементно проходимся по списку
+
+		// Настройка шапки таблицы
+		cout << setfill('-') << setw(85) << "" << endl; // Разделительная линия
+		cout << setfill(' ');
+
+		cout << left << setw(5) << " №"
+			<< setw(20) << "Марка"
+			<< setw(18) << "Комфорт"
+			<<right<< setw(12) << "Надежность"
+			<< setw(15) << "Расход (л)"
+			<< setw(12) << "Цена ($)" << endl;
+
+		cout << setfill('-') << setw(85) << "" << endl;
+		cout << setfill(' ');
+
+		int i = 1;
 		for (Node* ptr = this->head; ptr != NULL; ptr = ptr->next)
 		{
-			cout.width(4);
-			cout.fill(' ');
-			cout << i << ')';
-			cout.width(20);
-			cout.fill(' ');
-			cout << ptr->data.mark;
-			cout.width(18);
-			cout.fill(' ');
-			cout << ptr->data.comfortability;
-			cout.width(10);
-			cout.fill(' ');
-			cout << ptr->data.reliability;
-			cout.width(15);
-			cout.fill(' ');
-			cout << ptr->data.fconsumption;
-			cout.width(15);
-			cout.fill(' ');
-			cout << fixed << setprecision(3) << ptr->data.price << "\n";
+			cout << left << setw(2) << i << ") " // Номер
+				<< setw(20) << ptr->data.mark
+				<< setw(18) << ptr->data.comfortability;
+
+			// Числа лучше выравнивать по правому краю внутри их колонок, 
+			// но для простоты оставим left, если колонки широкие
+			cout<<right << setw(12) << ptr->data.reliability
+				<< setw(15) << fixed << setprecision(1) << ptr->data.fconsumption
+				<< setw(12) << fixed << setprecision(3) << ptr->data.price << endl;
+			cout << setfill('-') << setw(85) << "" << endl;
+			cout << setfill(' ');
 			i++;
 		}
 	}
