@@ -571,54 +571,22 @@ List search(List& list, int flag)
 	// Инициализируем список для вывода результатов поиска
 	List result;
 	int i = 0;
-	// Выбираем по какой степени комфортности фильтровать
-	switch (flag)
+	string s;
+	if (flag == 1)
+		s = "Отличная";
+	else if (flag == 2)
+		s = "Хорошая";
+	else if (flag == 3)
+		s = "Удовлетворительная";
+	// Поэлементно проходим список
+	for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
 	{
-		// Отличная		(49 = 1)
-	case 49:
-	{
-		// Поэлементно проходим список
-		for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
+		// Сравниваем результаты выполнения функции поиска из библиотеки для работы со строками
+		if (((((string)(ptr->data.comfortability))).find(s) != string::npos))
 		{
-			// Сравниваем результаты выполнения функции поиска из библиотеки для работы со строками
-			if (((((string)(ptr->data.mark))).find("Отличная") != string::npos))
-			{
-				result.push_back(list[i]->data);
-			}
-			i++;
+			result.push_back(list[i]->data);
 		}
-		break;
-	}
-	// Хорошая		(50 = 2)
-	case 50:
-	{
-		// Поэлементно проходим список
-		for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
-		{
-			// Сравниваем результаты выполнения функции поиска из библиотеки для работы со строками
-			if (((((string)(ptr->data.mark))).find("Хорошая") != string::npos))
-			{
-				result.push_back(list[i]->data);
-			}
-			i++;
-		}
-		break;
-	}
-	// Удовлетворительная		(51 = 3)
-	case 51:
-	{
-		// Поэлементно проходим список
-		for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
-		{
-			// Сравниваем результаты выполнения функции поиска из библиотеки для работы со строками
-			if (((((string)(ptr->data.mark))).find("Удовлетворительная") != string::npos))
-			{
-				result.push_back(list[i]->data);
-			}
-			i++;
-		}
-		break;
-	}
+		i++;
 	}
 	return result;
 }
@@ -810,6 +778,108 @@ void quickSort(List& list, int first, int last, bool(*func)(Node*, Node*))
 		quickSort(list, pi + 1, last, func);
 	}
 }
+void FilterMenu(List& list) 
+{
+	int mainMenuKey = 0;
+	List result = list;
+
+	while (mainMenuKey != 27) 
+	{ // 27 - Esc (выход из фильтрации)
+		result.Show();
+		cout << "\nФИЛЬТРАЦИЯ (Esc - вернуться назад)\n";
+		cout << "1. По комфортности\n";
+		cout << "2. По расходу топлива\n";
+		cout << "3. По надёжности\n";
+		cout << "4. По цене\n";
+		cout << "0. Сбросить фильтры\n";
+
+		mainMenuKey = _getch();
+
+		switch (mainMenuKey) 
+		{
+		case '1': { // Фильтр по комфортности
+			int comfortType = 0;
+			cout << "\nВыберите комфортность: 1-Отличная, 2-Хорошая, 3-Удовл.: ";
+			char key = _getch();
+			if (key >= '1' && key <= '3') 
+			{
+				comfortType = key - '0'; // Превращаем символ в число
+				result = search(result, comfortType);
+			}
+			break;
+		}
+
+		case '2': 
+		{ // Фильтр по расходу
+			cout << "\n1. Меньше чем\n2. Больше чем\n";
+			char subKey = _getch();
+			double val = 0;
+
+			cout << "Введите значение: ";
+			if (tryInputDouble(val)) 
+			{
+				if (subKey == '1') 
+					result = filter(result, AscByFuel, val);
+				else if (subKey == '2') 
+					result = filter(result, DescByFuel, val);
+			}
+			break;
+		}
+		case '3': 
+		{ // Фильтр по надёжности
+			cout << "\n1. Меньше чем\n2. Больше чем\n";
+			char subKey = _getch();
+			int val = 0;
+
+			cout << "Введите значение: ";
+			if (tryInputNumber(val)) 
+			{
+				if (subKey == '1') 
+					result = filter(result, AscByReliability, val);
+				else if (subKey == '2') 
+					result = filter(result, DescByReliability, val);
+			}
+			break;
+		}
+		case '4': 
+		{ // Фильтр по wtyt
+			cout << "\n1. Меньше чем\n2. Больше чем\n";
+			char subKey = _getch();
+			double val = 0;
+
+			// Используем вашу функцию tryInputDouble, чтобы Esc работал и здесь
+			cout << "Введите значение: ";
+			if (tryInputDouble(val)) 
+			{
+				if (subKey == '1') 
+					result = filter(result, AscByPrice, val);
+				else if (subKey == '2') 
+					result = filter(result, DescByPrice, val);
+			}
+			break;
+		}
+
+		case '0': 
+		{ // Сброс
+			result = list;
+			cout << "\nФильтры сброшены!";
+			_getch();
+			break;
+		}
+
+		case 27: // Esc
+			return;
+		}
+
+		// Проверка на пустой результат после фильтрации
+		if (result.count == 0) {
+			system("cls");
+			cout << "Машины не найдены! Фильтр будет сброшен.\n";
+			_getch();
+			result = list;
+		}
+	}
+}
 int main()
 {
 	setlocale(LC_ALL, ".1251");
@@ -884,7 +954,7 @@ int main()
 					menu = NULL;
 					cout << "\033[2J\033[1;1H"; // Очистка консоли					
 					cout << "Выберите действие!\n\n";
-					cout << "1. Искать по марке/комфортности\n";
+					cout << "1. Искать по марке\n";
 					cout << "2. Искать по характеристикам\n";
 					switch (_getch())
 					{
@@ -1044,281 +1114,7 @@ int main()
 				// FILTER
 				case 51:
 				{
-					menu = NULL;
-					List result;
-					result.ClearList();
-					result = list;
-					while (menu != 1)
-					{
-						result.Show();
-						cout << '\n';
-						cout << "Фильтровать по ...\n\n";
-						cout << "1.Марке/Комфортности\n";
-						cout << "2.Расходу топлива\n";
-						cout << "3.Надёжности\n";
-						cout << "4.Цене\n";
-						switch (menu = _getch())
-						{
-							// фильтр по текстовым полям
-						case 49:
-						{
-							string input;
-							result.Show();
-							cout << '\n';
-							cout << "Введите текст:\n\n";
-							cin >> input;
-							result = search(result, input);
-							if (result.count != 0)
-								menu = NULL;
-							else
-							{
-								cout << "\033[2J\033[1;1H";
-								cout << "Машины не найдены!\n\n";
-								_getch();
-								menu = 1;
-							}
-							break;
-						}
-						// фильтр по расходу топлива
-						case 50:
-						{
-							while (menu != 2)
-							{
-								float input = NULL;
-								result.Show();
-								cout << '\n';
-								cout << "Расход топлива на 100 км должен быть:\n\n";
-								cout << "1.Меньше чем:\n";
-								cout << "2.Больше чем:\n";
-								switch (_getch())
-								{
-								case 49:
-								{
-									result.Show();
-									cout << '\n';
-									cout << "Расход топлива на 100 км должен быть:\n\n";
-									cout << "Меньше чем: ";
-									if (cin >> input)
-										result = filter(result, AscByFuel, input);
-									else
-									{
-										cout << "\033[2J\033[1;1H";
-										cout << "Машины не найдены!\n\n";
-										_getch();
-										menu = 1;
-									}
-									if (result.count != 0)
-										menu = NULL;
-									else
-									{
-										cout << "\033[2J\033[1;1H";
-										cout << "Машины не найдены!\n\n";
-										_getch();
-										menu = 1;
-									}
-								}
-								break;
-								case 50:
-								{
-									result.Show();
-									cout << '\n';
-									cout << "Расход топлива на 100 км должен быть:\n\n";
-									cout << "Больше чем: ";
-									if (cin >> input)
-										result = filter(result, DescByFuel, input);
-									else
-									{
-										cout << "\033[2J\033[1;1H";
-										cout << "Машины не найдены!\n\n";
-										_getch();
-										menu = 1;
-									}
-									if (result.count != 0)
-										menu = NULL;
-									else
-									{
-										cout << "\033[2J\033[1;1H";
-										cout << "Машины не найдены!\n\n";
-										_getch();
-										menu = 1;
-									}
-								}
-								break;
-								// Выход в предыдущее меню (27 — Esc)
-								case 27:
-								{
-									menu = 2;
-									break;
-								}
-								}
-								cin.clear();
-								cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
-								if (menu == 1)
-									break;
-							}
-						}
-						// filter by reliability
-						case 51:
-						{
-							while (menu != 2)
-							{
-								float input = NULL;
-								result.Show();
-								cout << '\n';
-								cout << "Надёжность должна быть\n\n";
-								cout << "1.Меньше чем:\n";
-								cout << "2.Больше чем:\n";
-								switch (_getch())
-								{
-								case 49:
-								{
-									result.Show();
-									cout << '\n';
-									cout << "Надёжность должна быть:\n\n";
-									cout << "Меньше чем: ";
-									if (cin >> input)
-										result = filter(result, AscByReliability, input);
-									else
-									{
-										cout << "\033[2J\033[1;1H";
-										cout << "Машины не найдены!\n\n";
-										_getch();
-										menu = 1;
-									}
-									if (result.count != 0)
-										menu = NULL;
-									else
-									{
-										cout << "\033[2J\033[1;1H";
-										cout << "Машины не найдены!\n\n";
-										_getch();
-										menu = 1;
-									}
-								}
-								break;
-								case 50:
-								{
-									result.Show();
-									cout << '\n';
-									cout << "Надёжность должна быть:\n\n";
-									cout << "Больше чем: ";
-									if (cin >> input)
-										result = filter(result, DescByReliability, input);
-									else
-									{
-										cout << "\033[2J\033[1;1H";
-										cout << "Машины не найдены!\n\n";
-										_getch();
-										menu = 1;
-									}
-									if (result.count != 0)
-										menu = NULL;
-									else
-									{
-										cout << "\033[2J\033[1;1H";
-										cout << "Машины не найдены!\n\n";
-										_getch();
-										menu = 1;
-									}
-								}
-								break;
-								case 27:
-								{
-									menu = 2;
-									break;
-								}
-								}
-								cin.clear();
-								cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
-								if (menu == 1)
-									break;
-							}
-						}
-						// filter by Price
-						case 53:
-						{
-							while (menu != 2)
-							{
-								float input = NULL;
-								result.Show();
-								cout << '\n';
-								cout << "Стоимость авто должна быть:\n\n";
-								cout << "1. Меньше чем:\n";
-								cout << "2. Больше чем:\n";
-								switch (_getch())
-								{
-								case 49:
-								{
-									result.Show();
-									cout << '\n';
-									cout << "Стоимость авто должна быть:\n\n";
-									cout << "Меньше чем: ";
-									if (cin >> input)
-										result = filter(result, AscByPrice, input);
-									else
-									{
-										cout << "\033[2J\033[1;1H";
-										cout << "Машины не найдены!\n\n";
-										_getch();
-										menu = 1;
-									}
-									if (result.count != 0)
-										menu = NULL;
-									else
-									{
-										cout << "\033[2J\033[1;1H";
-										cout << "Машины не найдены!\n\n";
-										_getch();
-										menu = 1;
-									}
-								}
-								break;
-								case 50:
-								{
-									result.Show();
-									cout << '\n';
-									cout << "Стоимость авто должна быть:\n\n";
-									cout << "Больше чем: ";
-									if (cin >> input)
-										result = filter(result, DescByPrice, input);
-									else
-									{
-										cout << "\033[2J\033[1;1H";
-										cout << "Машины не найдены!\n\n";
-										_getch();
-										menu = 1;
-									}
-									if (result.count != 0)
-										menu = NULL;
-									else
-									{
-										cout << "\033[2J\033[1;1H";
-										cout << "Машины не найдены!\n\n";
-										_getch();
-										menu = 1;
-									}
-								}
-								break;
-								case 27:
-								{
-									menu = 2;
-									break;
-								}
-								}
-								cin.clear();
-								cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
-								if (menu == 1)
-									break;
-							}
-						}
-						// Выход в предыдущее меню (27 — Esc)
-						case 27:
-						{
-							menu = 1;
-							break;
-						}
-						}
-					}
+					FilterMenu(list);
 					break;
 				}
 				// Выход в предыдущее меню (27 — Esc)
@@ -1420,6 +1216,69 @@ int main()
 				_getch();
 			}
 			menu = NULL;
+			break;
+		}
+		// Special search
+		case 53:
+		{
+			string s;			
+			int choice=0;
+			// Очистка консоли									
+			cout << "\033[2J\033[1;1H";
+			cout << "Введите желаемую марку автомобиля: ";
+			cin >> s;
+			List result = search(list, s);
+			cout << "\033[2J\033[1;1H";
+			cout << "Ввыберите желаемую комфортность автомобиля: ";			
+			cout << "1.Отличная\n";
+			cout << "2.Хорошая\n";
+			cout << "3.Удовлетворительная\n";
+			do
+			{
+			switch (_getch())
+			{
+			case 49:
+			{
+				choice = 1;
+				result = search(result, choice);
+				break;
+			}
+			case 50:
+			{
+				choice = 2;
+				result = search(result, choice);
+				break;
+			}
+			case 51:
+			{
+				choice = 3;
+				result = search(result, choice);
+				break;
+			}				
+			}
+			} while (choice == 0);			
+			float num;
+			cout << "\033[2J\033[1;1H";
+			cout << "Введите желаемую надёжность авто: ";
+			if (cin >> num)
+				result = search(result, num);
+			cout << "\033[2J\033[1;1H";
+			cout << "Введите желаемую стоимость авто: ";
+			if (cin >> num)
+				result = search(result, num);
+			cout << "\033[2J\033[1;1H";
+			cout << "Введите желаемый расход топлива авто: ";
+			if (cin >> num)
+				result = search(result, num);
+			if (result.count != 0)
+				result.Show();
+			else
+			{
+				cout << "\033[2J\033[1;1H";
+				cout << "Таких машин не найдено!\n\n";
+			}
+			_getch();
+			result.ClearList();
 			break;
 		}
 		// Выход из приложения (27 — Esc)
