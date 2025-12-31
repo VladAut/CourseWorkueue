@@ -1117,9 +1117,6 @@ int main()
 	setlocale(LC_ALL, "Russian");
 	// Инициализируем список
 	List list;
-	// Инициализируем переменную для переходов по меню
-	int menu;
-	menu = NULL;
 	// Инициализируем переменную для записи компьютеров
 	Auto car;
 	// Попытка считать данные с файла
@@ -1275,7 +1272,7 @@ int main()
 			list.ClearList();
 			cout << "Готово." << endl;
 			_getch();
-			exit(0);
+			return 0;
 			break;
 		}
 	}
