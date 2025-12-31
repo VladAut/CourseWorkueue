@@ -11,6 +11,9 @@
 #include <algorithm> // Для std::transform
 #include <cctype>    // Для std::tolower
 #include <new> // Обязательно для placement new
+#include <map>
+#include <cwctype> // Для iswprint
+#include <windows.h>
 
 using namespace std;
 bool tryInputNumber(int& result)
@@ -48,13 +51,13 @@ bool tryInputNumber(int& result)
 		}
 	}
 }
-bool tryInputDouble(double& result) 
+bool tryInputDouble(double& result)
 {
 	string input = "";
 	char ch;
 	bool dotPointed = false; // Флаг: была ли уже поставлена точка
 
-	while (true) 
+	while (true)
 	{
 		ch = _getch();
 
@@ -62,9 +65,9 @@ bool tryInputDouble(double& result)
 		if (ch == 27) return false;
 
 		// 2. Завершение по Enter
-		if (ch == 13) 
+		if (ch == 13)
 		{
-			if (input.empty() || input == "." || input == "-") 
+			if (input.empty() || input == "." || input == "-")
 				continue;
 			cout << endl;
 			result = atof(input.c_str()); // Преобразуем строку в double
@@ -72,9 +75,9 @@ bool tryInputDouble(double& result)
 		}
 
 		// 3. Удаление (Backspace)
-		if (ch == 8) 
+		if (ch == 8)
 		{
-			if (!input.empty()) 
+			if (!input.empty())
 			{
 				if (input.back() == '.') dotPointed = false; // Если удалили точку, разрешаем её снова
 				input.pop_back();
@@ -83,7 +86,7 @@ bool tryInputDouble(double& result)
 		}
 
 		// 5. Дробная часть (точка или запятая)
-		else if ((ch == '.' || ch == ',') && !dotPointed) 
+		else if ((ch == '.' || ch == ',') && !dotPointed)
 		{
 			// Разрешаем точку, только если её еще нет
 			// (в C++ stod понимает только точку, поэтому всегда записываем её)
@@ -93,7 +96,7 @@ bool tryInputDouble(double& result)
 		}
 
 		// 6. Цифры
-		else if (isdigit(ch)) 
+		else if (isdigit(ch))
 		{
 			input += ch;
 			cout << ch;
@@ -102,24 +105,21 @@ bool tryInputDouble(double& result)
 }
 bool tryInputCharArray(char* result, int maxSize) {
 	int currentLen = 0;
-	int ch;
+	wint_t ch; // Используем широкий тип для поддержки кириллицы
 
-	// Очищаем массив перед началом ввода
 	result[0] = '\0';
 
 	while (true) {
-		ch = _getch(); // Читаем код клавиши
+		ch = _getwch(); // Читаем широкий символ (работает с RU/EN)
 
 		// 1. Обработка Esc
-		if (ch == 27) {
-			return false;
-		}
+		if (ch == 27) return false;
 
 		// 2. Обработка Enter
 		if (ch == 13) {
-			if (currentLen == 0) continue; // Не пускаем пустую строку
+			if (currentLen == 0) continue;
 			cout << endl;
-			result[currentLen] = '\0'; // Завершаем строку нуль-терминатором
+			result[currentLen] = '\0';
 			return true;
 		}
 
@@ -128,20 +128,23 @@ bool tryInputCharArray(char* result, int maxSize) {
 			if (currentLen > 0) {
 				currentLen--;
 				result[currentLen] = '\0';
-				cout << "\b \b"; // Затираем в консоли
+				cout << "\b \b";
 			}
 		}
-		// 4. Обработка спец. клавиш (стрелки и т.д.)
-		else if (ch == 0 || ch == 224) {
-			_getch(); // Пропускаем второй код
+		// 4. Игнорируем функциональные клавиши (стрелки и т.д.)
+		else if (ch == 0 || ch == 224 || ch == 0xE0) {
+			_getwch(); // Пропускаем второй код
 		}
-		// 5. Печатаемые символы (с проверкой на размер массива)
-		else if (ch >= 32) {
-			// Проверяем, осталось ли место в массиве (учитываем 1 байт под '\0')
+		// 5. Печатаемые символы
+		else if (iswprint(ch)) {
 			if (currentLen < maxSize - 1) {
+				// Преобразуем широкий символ обратно в char для записи в массив
+				// В Windows с русской локалью это сработает корректно
 				result[currentLen] = (char)ch;
 				currentLen++;
-				cout << (char)ch;
+
+				// Чтобы символ отобразился корректно, выводим его через wcout или printf
+				printf("%c", (char)ch);
 			}
 		}
 	}
@@ -203,20 +206,20 @@ struct Auto
 				cout << "1.Отличная\n";
 				cout << "2.Хорошая\n";
 				cout << "3.Удовлетворительная\n";
-				int choice;				
+				int choice;
 				if (tryInputNumber(choice))
 				{
 					if (choice == 1)
 					{
-						strncpy_s(this->comfortability, "Отличная", 18);						
+						strncpy_s(this->comfortability, "Отличная", 18);
 					}
 					else if (choice == 2)
 					{
-						strncpy_s(this->comfortability, "Хорошая", 18);						
+						strncpy_s(this->comfortability, "Хорошая", 18);
 					}
 					else if (choice == 3)
 					{
-						strncpy_s(this->comfortability, "Удовлетворительная", 18);						
+						strncpy_s(this->comfortability, "Удовлетворительная", 18);
 					}
 					else
 						break;
@@ -261,8 +264,8 @@ struct Auto
 	Auto(string markNew, string comfortabilityNew, double priceNew, double fconsumptionNew, int reliabilityNew)
 	{
 		// strncpy_s(куда, откуда, сколько байт максимум)
-		strncpy_s(this->mark, markNew.c_str(), 20);		
-		strncpy_s(this->comfortability, comfortabilityNew.c_str(), 18);		
+		strncpy_s(this->mark, markNew.c_str(), 20);
+		strncpy_s(this->comfortability, comfortabilityNew.c_str(), 18);
 		this->price = priceNew;
 		this->fconsumption = fconsumptionNew;
 		this->reliability = reliabilityNew;
@@ -361,6 +364,7 @@ public:
 		else
 			tail = NULL;
 		// Очищаем текущий первый элемент
+		head->~Node();
 		free(head);
 		// Записываем на его место "второй"
 		head = ptr;
@@ -380,6 +384,7 @@ public:
 		else
 			head = NULL;
 		// Очищаем текущий крайний элемент
+		tail->~Node();
 		free(tail);
 		// Записываем на его "предпоследний" второй
 		tail = ptr;
@@ -412,6 +417,7 @@ public:
 		left->next = right;
 		right->prev = left;
 		// Освобождаем память элемента (удаляем)
+		ptr->~Node();
 		free(ptr);
 		this->count--;
 	}
@@ -435,7 +441,7 @@ public:
 		cout << left << setw(5) << " №"
 			<< setw(20) << "Марка"
 			<< setw(18) << "Комфорт"
-			<<right<< setw(12) << "Надежность"
+			<< right << setw(12) << "Надежность"
 			<< setw(15) << "Расход (л)"
 			<< setw(12) << "Цена ($)" << endl;
 
@@ -451,7 +457,7 @@ public:
 
 			// Числа лучше выравнивать по правому краю внутри их колонок, 
 			// но для простоты оставим left, если колонки широкие
-			cout<<right << setw(12) << ptr->data.reliability
+			cout << right << setw(12) << ptr->data.reliability
 				<< setw(15) << fixed << setprecision(1) << ptr->data.fconsumption
 				<< setw(12) << fixed << setprecision(3) << ptr->data.price << endl;
 			cout << setfill('-') << setw(85) << "" << endl;
@@ -539,27 +545,35 @@ public:
 			// 2. Вызываем конструктор вручную в выделенной памяти (placement new)
 			// Это инициализирует строки mark и comfortability корректно
 			new (temp) Node(first->data);
-		}	
+		}
 		// Меняем их местави
 		first->data = second->data;
 		second->data = temp->data;
 		// Освобождаем ранее выделенную память
+		temp->~Node();
 		free(temp);
 	}
 };
 //Поиск по марке автомобиля
 List search(List& list, string s)
 {
-	// Инициализируем список для вывода результатов поиска
 	List result;
+
+	// 1. Приводим поисковый запрос (s) к нижнему регистру один раз
+	string query = s;
+	transform(query.begin(), query.end(), query.begin(), ::tolower);
+
 	int i = 0;
-	// Поэлементно проходим список
 	for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
 	{
-		// Сравниваем результаты выполнения функции поиска из библиотеки для работы со строками
-		if (((((string)(ptr->data.mark))).find(s) != string::npos))
+		// 2. Копируем марку во временную строку и тоже приводим к нижнему регистру
+		string markStr = ptr->data.mark;
+		transform(markStr.begin(), markStr.end(), markStr.begin(), ::tolower);
+
+		// 3. Ищем вхождение подстроки
+		if (markStr.find(query) != string::npos)
 		{
-			result.push_back(list[i]->data);
+			result.push_back(ptr->data);
 		}
 		i++;
 	}
@@ -591,7 +605,7 @@ List search(List& list, int flag)
 	return result;
 }
 // Поиск по численным полям
-List search(List& list, float input)
+List search(List& list, double input)
 {
 	// Инициализируем список для вывода результатов поиска
 	List result;
@@ -626,6 +640,7 @@ List filter(List& list, bool(*func)(Node*, Node*), double item)
 		}
 		i++;
 	}
+	temp->~Node();
 	free(temp);
 	return result;
 }
@@ -657,6 +672,7 @@ void readStruct(List& list)
 		}
 		// Закрываем файл
 		fclose(file);
+		car->~Node();
 		free(car);
 	}
 }
@@ -778,12 +794,12 @@ void quickSort(List& list, int first, int last, bool(*func)(Node*, Node*))
 		quickSort(list, pi + 1, last, func);
 	}
 }
-void FilterMenu(List& list) 
+void FilterMenu(List& list)
 {
 	int mainMenuKey = 0;
 	List result = list;
 
-	while (mainMenuKey != 27) 
+	while (mainMenuKey != 27)
 	{ // 27 - Esc (выход из фильтрации)
 		result.Show();
 		cout << "\nФИЛЬТРАЦИЯ (Esc - вернуться назад)\n";
@@ -795,13 +811,13 @@ void FilterMenu(List& list)
 
 		mainMenuKey = _getch();
 
-		switch (mainMenuKey) 
+		switch (mainMenuKey)
 		{
 		case '1': { // Фильтр по комфортности
 			int comfortType = 0;
 			cout << "\nВыберите комфортность: 1-Отличная, 2-Хорошая, 3-Удовл.: ";
 			char key = _getch();
-			if (key >= '1' && key <= '3') 
+			if (key >= '1' && key <= '3')
 			{
 				comfortType = key - '0'; // Превращаем символ в число
 				result = search(result, comfortType);
@@ -809,39 +825,39 @@ void FilterMenu(List& list)
 			break;
 		}
 
-		case '2': 
+		case '2':
 		{ // Фильтр по расходу
 			cout << "\n1. Меньше чем\n2. Больше чем\n";
 			char subKey = _getch();
 			double val = 0;
 
 			cout << "Введите значение: ";
-			if (tryInputDouble(val)) 
+			if (tryInputDouble(val))
 			{
-				if (subKey == '1') 
+				if (subKey == '1')
 					result = filter(result, AscByFuel, val);
-				else if (subKey == '2') 
+				else if (subKey == '2')
 					result = filter(result, DescByFuel, val);
 			}
 			break;
 		}
-		case '3': 
+		case '3':
 		{ // Фильтр по надёжности
 			cout << "\n1. Меньше чем\n2. Больше чем\n";
 			char subKey = _getch();
 			int val = 0;
 
 			cout << "Введите значение: ";
-			if (tryInputNumber(val)) 
+			if (tryInputNumber(val))
 			{
-				if (subKey == '1') 
+				if (subKey == '1')
 					result = filter(result, AscByReliability, val);
-				else if (subKey == '2') 
+				else if (subKey == '2')
 					result = filter(result, DescByReliability, val);
 			}
 			break;
 		}
-		case '4': 
+		case '4':
 		{ // Фильтр по wtyt
 			cout << "\n1. Меньше чем\n2. Больше чем\n";
 			char subKey = _getch();
@@ -849,17 +865,17 @@ void FilterMenu(List& list)
 
 			// Используем вашу функцию tryInputDouble, чтобы Esc работал и здесь
 			cout << "Введите значение: ";
-			if (tryInputDouble(val)) 
+			if (tryInputDouble(val))
 			{
-				if (subKey == '1') 
+				if (subKey == '1')
 					result = filter(result, AscByPrice, val);
-				else if (subKey == '2') 
+				else if (subKey == '2')
 					result = filter(result, DescByPrice, val);
 			}
 			break;
 		}
 
-		case '0': 
+		case '0':
 		{ // Сброс
 			result = list;
 			cout << "\nФильтры сброшены!";
@@ -880,9 +896,225 @@ void FilterMenu(List& list)
 		}
 	}
 }
+void SortMenu(List& list)
+{
+	// Храним текущее состояние сортировки для каждого поля.
+	// true = по возрастанию (Asc), false = по убыванию (Desc).
+	map<int, bool> sortState;
+	// Инициализируем все критерии как Ascending по умолчанию
+	sortState[1] = true; // Mark
+	sortState[2] = true; // Comfort
+	sortState[3] = true; // Reliability
+	sortState[4] = true; // Fuel
+	sortState[5] = true; // Price
+
+	while (true)
+	{ // Бесконечный цикл, выход по Esc/0
+		system("cls");
+		list.Show(); // Показываем текущий список
+		cout << "\n--- МЕНЮ СОРТИРОВКИ --- (Esc/0 - Назад)\n";
+		cout << "Выберите поле для сортировки (повторное нажатие меняет порядок):\n";
+
+		// Отображаем текущий порядок сортировки рядом с пунктом
+		cout << "1. Марка         (" << (sortState[1] ? "А-Я" : "Я-А") << ")\n";
+		cout << "2. Комфортность  (" << (sortState[2] ? "А-Я" : "Я-А") << ")\n";
+		cout << "3. Надёжность    (" << (sortState[3] ? "min" : "max") << ")\n";
+		cout << "4. Расход        (" << (sortState[4] ? "min" : "max") << ")\n";
+		cout << "5. Цена          (" << (sortState[5] ? "min" : "max") << ")\n";
+		cout << "--------------------------------\n";
+
+		char choice = _getch();
+
+		if (choice == '0' || choice == 27)
+		{
+			return; // Выход из функции меню
+		}
+
+		// Проверяем, является ли выбор валидной цифрой 1-5
+		if (choice >= '1' && choice <= '5')
+		{
+			int key = choice - '0'; // Преобразуем '1' в 1
+
+			// 1. Меняем состояние флага для выбранного пункта
+			sortState[key] = !sortState[key];
+			bool isAscending = sortState[key];
+
+			// 2. Вызываем quickSort с соответствующим критерием
+			switch (key)
+			{
+			case 1:
+				quickSort(list, 0, list.count - 1, isAscending ? AscByMark : DescByMark);
+				break;
+			case 2:
+				quickSort(list, 0, list.count - 1, isAscending ? AscByComfort : DescByComfort);
+				break;
+			case 3:
+				quickSort(list, 0, list.count - 1, isAscending ? AscByReliability : DescByReliability);
+				break;
+			case 4:
+				quickSort(list, 0, list.count - 1, isAscending ? AscByFuel : DescByFuel);
+				break;
+			case 5:
+				quickSort(list, 0, list.count - 1, isAscending ? AscByPrice : DescByPrice);
+				break;
+			}
+			// Цикл сразу начинается заново и показывает отсортированный список
+		}
+		// Если нажата другая клавиша, она просто игнорируется
+	}
+}
+void SearchMenu(List& list)
+{
+	while (true)
+	{
+		system("cls");
+		cout << "========= МЕНЮ ПОИСКА =========" << endl;
+		cout << "1. Искать по марке" << endl;
+		cout << "2. Искать по числовым характеристикам" << endl;
+		cout << "-------------------------------" << endl;
+		cout << "0. Назад (или Esc)" << endl;
+		cout << "===============================" << endl;
+		cout << "Ваш выбор: ";
+
+		char choice = _getch();
+
+		if (choice == '0' || choice == 27)
+			return; // Выход в главное меню
+
+		switch (choice)
+		{
+		case '1':
+		{ // Поиск по марке (текст)
+			char searchStr[20];
+			system("cls");
+			cout << "ПОИСК ПО МАРКЕ\n";
+			cout << "Введите название (Esc для отмены): ";
+
+			// Используем нашу безопасную функцию ввода char[]
+			if (tryInputCharArray(searchStr, 20))
+			{
+				List result = search(list, searchStr);
+
+				system("cls");
+				if (result.count != 0)
+				{
+					cout << "Результаты поиска по запросу [" << searchStr << "]:\n";
+					result.Show();
+				}
+				else
+				{
+					cout << "Машин марки '" << searchStr << "' не найдено.\n";
+				}
+				cout << "\nНажмите любую клавишу...";
+				_getch();
+			}
+			break;
+		}
+
+		case '2':
+		{ // Поиск по числам (цена, расход и т.д.)
+			double val = 0;
+			system("cls");
+			cout << "ПОИСК ПО ХАРАКТЕРИСТИКАМ\n";
+			cout << "Введите числовое значение для поиска: ";
+
+			// Используем нашу безопасную функцию ввода double
+			if (tryInputDouble(val))
+			{
+				List result = search(list, val);
+
+				system("cls");
+				if (result.count != 0)
+				{
+					cout << "Результаты поиска по значению [" << val << "]:\n";
+					result.Show();
+				}
+				else {
+					cout << "Машин с такими характеристиками не найдено.\n";
+				}
+				cout << "\nНажмите любую клавишу...";
+				_getch();
+			}
+			break;
+		}
+		}
+	}
+}
+void ComplexSearch(List& list)
+{
+	// Начинаем с копии всего списка
+	List result = list;
+	double inputNum = 0;
+	// ШАГ 1: Поиск по марке
+	system("cls");
+	cout << "ШАГ 1: Введите желаемую марку (Esc - пропустить): " << flush;
+	char searchMark[20]; // массив для ввода
+	if (tryInputCharArray(searchMark, 20))
+	{
+		result = search(result, string(searchMark));
+	}
+	// ШАГ 2: Фильтр по комфортности
+	if (result.count > 0) {
+		system("cls");
+		cout << "ШАГ 2: Выберите желаемую комфортность:\n";
+		cout << "1. Отличная\n2. Хорошая\n3. Удовлетворительная\nEsc - пропустить\n";
+		while (true)
+		{
+			int key = _getch();
+			if (key == 27) break; // Пропустить по Esc
+			if (key >= '1' && key <= '3')
+			{
+				result = search(result, key - '0');
+				break;
+			}
+		}
+	}
+	// ШАГ 3: Фильтр по надёжности
+	if (result.count > 0)
+	{
+		system("cls");
+		cout << "ШАГ 3: Введите минимальную надёжность (лет) (Esc - пропустить): ";
+		if (tryInputDouble(inputNum))
+			result = search(result, inputNum);
+	}
+	// ШАГ 4: Фильтр по стоимости
+	if (result.count > 0)
+	{
+		system("cls");
+		cout << "ШАГ 4: Введите максимальную стоимость (Esc - пропустить): ";
+		if (tryInputDouble(inputNum))
+			result = search(result, inputNum);
+	}
+	// ШАГ 5: Фильтр по расходу топлива (ВОТ ОН)
+	if (result.count > 0)
+	{
+		system("cls");
+		cout << "ШАГ 5: Введите максимально допустимый расход (л/100км) (Esc - пропустить): ";
+		if (tryInputDouble(inputNum))
+		{
+			result = search(result, inputNum);
+		}
+	}
+	// ИТОГОВЫЙ ВЫВОД
+	system("cls");
+	if (result.count != 0)
+	{
+		cout << "РЕЗУЛЬТАТЫ ПОДБОРА (найдено " << result.count << " авто):\n";
+		result.Show();
+	}
+	else
+	{
+		cout << "\n[!] К сожалению, по вашим требованиям ничего не найдено.\n";
+	}
+	cout << "\nНажмите любую клавишу для возврата в меню...";
+	_getch();
+	// Очистка временного списка result произойдет автоматически при выходе из области видимости
+}
 int main()
 {
-	setlocale(LC_ALL, ".1251");
+	SetConsoleCP(1251);
+	SetConsoleOutputCP(1251);
+	setlocale(LC_ALL, "Russian");
 	// Инициализируем список
 	List list;
 	// Инициализируем переменную для переходов по меню
@@ -893,404 +1125,158 @@ int main()
 	// Попытка считать данные с файла
 	readStruct(list);
 	// Цикл для меню
-	while (menu != 27)
+	while (true) // Основной бесконечный цикл приложения
 	{
-		// Проверка на существование записей в списке
+		system("cls");
+
+		// 1. ПРОВЕРКА НА ПУСТОТУ БАЗЫ
 		if (list.count == 0)
 		{
-			while (true)
+			cout << "========================================" << endl;
+			cout << "       СИСТЕМА УЧЕТА АВТОМОБИЛЕЙ        " << endl;
+			cout << "========================================" << endl;
+			cout << "\n [!] Внимание: База данных пуста.\n" << endl;
+			cout << " 1. Добавить первую запись" << endl;
+			cout << " 2. Выйти из программы" << endl;
+			cout << "========================================" << endl;
+			cout << " Выберите действие: ";
+
+			char emptyChoice = _getch();
+			if (emptyChoice == '2' || emptyChoice == 27)
+				exit(0);
+			if (emptyChoice == '1')
 			{
-				cout << "\033[2J\033[1;1H";
-				cout << "База данных не найдена!\n\n";
-				cout << "1.Добавить машину\n";
-				cout << "2.Выйти\n";
-				menu = _getch();
-				if (menu == 50)
-				{
-					exit(0);
-				}
-				else if (menu == 49)
-				{
-					menu = 50;
-					break;
-				}
-			}
-		}
-		if (menu != 50)
-		{
-			// Выводим главное меню
-			cout << "\033[2J\033[1;1H"; // Очистка консоли
-			cout << "Выберите действие!\n\n";
-			cout << "1.Список машин\n";
-			cout << "2.Добавить\n";
-			cout << "3.Изменить\n";
-			cout << "4.Удалить\n";
-			cout << "5.Вывести перечень авто согласно требованиям\n\n";
-			cout << "Нажмите Esc чтобы сохранить и выйти\n";
-			// Считываем нажатую клавишу
-			menu = _getch();
-		}
-		switch (menu)
-		{
-			// SHOW LIST			
-		case 49:
-		{
-
-			while (menu != 2)
-			{
-				menu = NULL;
-				cout << "\033[2J\033[1;1H"; // Очистка консоли
-				list.Show();
-				cout << '\n';
-				cout << "Выберите действие!\n\n";
-				cout << "1.Поиск\n";
-				cout << "2.Сортировка\n";
-				cout << "3.Фильтр\n";
-				switch (menu = _getch())
-				{
-					// SEARCH
-				case 49:
-				{
-					menu = NULL;
-					cout << "\033[2J\033[1;1H"; // Очистка консоли					
-					cout << "Выберите действие!\n\n";
-					cout << "1. Искать по марке\n";
-					cout << "2. Искать по характеристикам\n";
-					switch (_getch())
-					{
-						// Поиск по марке
-					case 49:
-					{
-						string s;
-						// Очистка консоли									
-						cout << "\033[2J\033[1;1H";
-						cout << "Введите искомое значение: ";
-						cin >> s;
-						List result = search(list, s);
-						if (result.count != 0)
-							result.Show();
-						else
-						{
-							cout << "\033[2J\033[1;1H";
-							cout << "Таких машин не найдено!\n\n";
-						}
-						_getch();
-						result.ClearList();
-					}
-					break;
-					// Поиск по числам
-					case 50:
-					{
-						List result;
-						float s;
-						cout << "\033[2J\033[1;1H";
-						cout << "Введите искомое значение: ";
-						if (cin >> s)
-							result = search(list, s);
-						if (result.count != 0)
-							result.Show();
-						else
-						{
-							cout << "\033[2J\033[1;1H";
-							cout << "Машин с такими характеристиками не найдено\n\n";
-						}
-						_getch();
-						result.ClearList();
-					}
-					break;
-					}
-					break;
-				}
-				// SORT
-				case 50:
-				{
-					menu = NULL;
-					// Флаг для определения в каком порядке сортировать
-					int flag = 0;
-					while (menu != 1)
-					{
-						list.Show();
-						cout << '\n';
-						cout << "Сортировать по ...\n\n";
-						cout << "1.Марке\n";
-						cout << "2.Комфортности\n";
-						cout << "3.Расходу топлива\n";
-						cout << "4.Надёжности\n";
-						cout << "5.Цене\n";
-						switch (menu = _getch())
-						{
-							// сортировка по марке
-						case 49:
-						{
-							menu = NULL;
-							if (flag == 0)
-							{
-								quickSort(list, 0, list.count - 1, AscByMark);
-								flag++;
-							}
-							else
-							{
-								quickSort(list, 0, list.count - 1, DescByMark);
-								flag = 0;
-							}
-							break;
-						}
-						// сортировка по комфортности
-						case 50:
-						{
-
-							menu = NULL;
-							if (flag == 0)
-							{
-								quickSort(list, 0, list.count - 1, AscByComfort);
-								flag++;
-							}
-							else
-							{
-								quickSort(list, 0, list.count - 1, DescByComfort);
-								flag = 0;
-							}
-							break;
-						}
-						// сортировка по расходу топлива
-						case 51:
-						{
-
-							menu = NULL;
-							if (flag == 0)
-							{
-								quickSort(list, 0, list.count - 1, AscByFuel);
-								flag++;
-							}
-							else
-							{
-								quickSort(list, 0, list.count - 1, DescByFuel);
-								flag = 0;
-							}
-							break;
-						}
-						// сортировка по надёжности
-						case 52:
-						{
-
-							menu = NULL;
-							if (flag == 0)
-							{
-								quickSort(list, 0, list.count - 1, AscByReliability);
-								flag++;
-							}
-							else
-							{
-								quickSort(list, 0, list.count - 1, DescByReliability);
-								flag = 0;
-							}
-							break;
-						}
-						// сортировка по цене
-						case 53:
-						{
-
-							menu = NULL;
-							if (flag == 0)
-							{
-								quickSort(list, 0, list.count - 1, AscByPrice);
-								flag++;
-							}
-							else
-							{
-								quickSort(list, 0, list.count - 1, DescByPrice);
-								flag = 0;
-							}
-							break;
-						}
-						// Выход в предыдущее меню (27 — Esc)
-						case 27:
-							menu = 1;
-							break;
-						}
-					}
-					break;
-				}
-				// FILTER
-				case 51:
-				{
-					FilterMenu(list);
-					break;
-				}
-				// Выход в предыдущее меню (27 — Esc)
-				case 27:
-				{
-					menu = 2;
-					break;
-				}
-				}
-			}
-			break;
-		}
-		// ADD
-		case 50:
-		{
-			// Вызываем функцию добавления и вручную вводим все данные
-			if (car.AutoInput())
-				// Записанный пк добавляем в список
-				list.push_back(car);
-			// Возвращаемся в главное меню
-			menu = 2;
-			break;
-		}
-		// EDIT
-		case 51:
-		{
-			menu = NULL;
-			// Цикл для проверки ввода
-			while (true)
-			{
-				list.Show();
-				cout << "Введите порядковый номер записи, которую вы хотите изменить:\n";
-				// Проверка на корректность введённых данных
-				if (!tryInputNumber(menu))
-				{
-					menu = 27;
-					break;
-				}
-				else if (menu <= list.count && menu > 0)
-				{
-					break;
-				}
-				else
-				{
-					cout << "\033[2J\033[1;1H" << "Неккоректные данные! Введите снова";
-					_getch();
-					cin.clear();
-					cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
-				}
-			}
-			if (menu != 27)
-			{
-				// Вводим новые данные для выбранной записи
 				if (car.AutoInput())
-				{
-
-					// Удаляем выбранную запись
-					list.erase(menu - 1);
-				// Вставляем на её место новую
-				list.insert(menu - 1, car);
-				cout << "Для продолжения нажмите любуе клавишу";
-				_getch();
-				}
+					list.push_back(car);
+				continue; // Возвращаемся в начало, чтобы перерисовать полноценное меню
 			}
-				menu = NULL;
-			break;
+			continue;
 		}
-		// DELETE
-		case 52:
+		// 2. ГЛАВНОЕ МЕНЮ
+		cout << "========================================" << endl;
+		cout << "            ГЛАВНОЕ МЕНЮ                " << endl;
+		cout << "========================================" << endl;
+		cout << " 1. [ Список автомобилей ]" << endl;
+		cout << " 2. [ Добавить новую запись ]" << endl;
+		cout << " 3. [ Изменить существующую запись]" << endl;
+		cout << " 4. [ Удалить запись ]" << endl;
+		cout << " 5. [ Подобрать авто по параметрам ]" << endl;
+		cout << "----------------------------------------" << endl;
+		cout << " Esc. Сохранить изменения и выйти" << endl;
+		cout << "========================================" << endl;
+		cout << " Ваш выбор: ";
+		char mainMenuChoice = _getch();
+		switch (mainMenuChoice)
 		{
-			// Цикл для проверки вводимых значений
+		case '1': // РАБОТА СО СПИСКОМ
+		{
 			while (true)
 			{
+				system("cls");
 				list.Show();
-				cout << "Введите порядковый номер записи, которую вы хотите удалить:\n";
-				if (!tryInputNumber(menu))
-				{
-					menu = 27;
-					break;
-				}
-				else if ( menu <= list.count && menu > 0)
-				{
-					break;
-				}
-				else
-				{
-					cout << "\033[2J\033[1;1H" << "Неккоректные данные! Введите снова";
-					_getch();
-					cin.clear();
-					cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
-				}
+				cout << "\n---------- ДЕЙСТВИЯ СО СПИСКОМ ----------" << endl;
+				cout << " 1. Поиск | 2. Сортировка | 3. Фильтр | Esc. Назад" << endl;
+
+				char subAction = _getch();
+				if (subAction == 27)
+					break; // Возврат в главное меню
+
+				if (subAction == '1')
+					SearchMenu(list);
+				else if (subAction == '2')
+					SortMenu(list);
+				else if (subAction == '3')
+					FilterMenu(list);
 			}
-			if (menu != 27)
-			{
-				list.erase(menu - 1);
-				menu = NULL;
-				cout << "\033[2J\033[1;1H"; // Очистка консоли
-				cout << "Для продолжения нажмите любую клавишу";
-				_getch();
-			}
-			menu = NULL;
 			break;
 		}
-		// Special search
-		case 53:
-		{
-			string s;			
-			int choice=0;
-			// Очистка консоли									
-			cout << "\033[2J\033[1;1H";
-			cout << "Введите желаемую марку автомобиля: ";
-			cin >> s;
-			List result = search(list, s);
-			cout << "\033[2J\033[1;1H";
-			cout << "Ввыберите желаемую комфортность автомобиля: ";			
-			cout << "1.Отличная\n";
-			cout << "2.Хорошая\n";
-			cout << "3.Удовлетворительная\n";
-			do
+
+		case '2': // ДОБАВИТЬ
+			system("cls");
+			cout << "--- Регистрация нового автомобиля ---" << endl;
+			if (car.AutoInput())
 			{
-			switch (_getch())
-			{
-			case 49:
-			{
-				choice = 1;
-				result = search(result, choice);
-				break;
+				list.push_back(car);
+				cout << "\nЗапись успешно добавлена!";
 			}
-			case 50:
-			{
-				choice = 2;
-				result = search(result, choice);
-				break;
-			}
-			case 51:
-			{
-				choice = 3;
-				result = search(result, choice);
-				break;
-			}				
-			}
-			} while (choice == 0);			
-			float num;
-			cout << "\033[2J\033[1;1H";
-			cout << "Введите желаемую надёжность авто: ";
-			if (cin >> num)
-				result = search(result, num);
-			cout << "\033[2J\033[1;1H";
-			cout << "Введите желаемую стоимость авто: ";
-			if (cin >> num)
-				result = search(result, num);
-			cout << "\033[2J\033[1;1H";
-			cout << "Введите желаемый расход топлива авто: ";
-			if (cin >> num)
-				result = search(result, num);
-			if (result.count != 0)
-				result.Show();
 			else
 			{
-				cout << "\033[2J\033[1;1H";
-				cout << "Таких машин не найдено!\n\n";
+				cout << "\nВвод отменен.";
 			}
 			_getch();
-			result.ClearList();
 			break;
-		}
-		// Выход из приложения (27 — Esc)
-		case 27:
+
+		case '3': // ИЗМЕНИТЬ
+			// (Ваш откорректированный код редактирования)
 		{
-			// Сохранение внесённых изменений (запись текущего списка в файл)
+			int targetIdx = 0;
+			while (true)
+			{
+				system("cls");
+				list.Show();
+				cout << "\nВведите номер записи для ИЗМЕНЕНИЯ (Esc - отмена): ";
+				int inputVal = 0;
+				if (!tryInputNumber(inputVal))
+				{
+					targetIdx = 27;
+					break;
+				}
+				if (inputVal > 0 && inputVal <= list.count)
+				{
+					targetIdx = inputVal;
+					break;
+				}
+				cout << "\n[Ошибка] Номер неверный!";
+				_getch();
+			}
+			if (targetIdx != 27)
+			{
+				Auto newCar;
+				system("cls");
+				if (newCar.AutoInput())
+				{
+					list.erase(targetIdx - 1);
+					list.insert(targetIdx - 1, newCar);
+					cout << "\nОбновлено!";
+				}
+				_getch();
+			}
+		}
+		break;
+
+		case '4': // УДАЛИТЬ
+			// (Ваш откорректированный код удаления)
+		{
+			system("cls");
+			list.Show();
+			cout << "\nВведите номер записи для УДАЛЕНИЯ (Esc - отмена): ";
+			int delVal = 0;
+			if (tryInputNumber(delVal) && delVal > 0 && delVal <= list.count)
+			{
+				list.erase(delVal - 1);
+				cout << "\nЗапись удалена!";
+			}
+			else
+			{
+				cout << "\nОтмена или неверный номер.";
+			}
+			_getch();
+		}
+		break;
+
+		case '5': // КОМПЛЕКСНЫЙ ПОИСК
+			ComplexSearch(list);
+			break;
+
+		case 27: // ВЫХОД И СОХРАНЕНИЕ
+			system("cls");
+			cout << "Сохранение данных в файл..." << endl;
 			writeStruct(list);
-			// Очистка списка
 			list.ClearList();
+			cout << "Готово." << endl;
+			_getch();
 			exit(0);
 			break;
-		}
 		}
 	}
 }
