@@ -10,139 +10,259 @@
 #include <string>
 #include <algorithm> // Для std::transform
 #include <cctype>    // Для std::tolower
+#include <new> // Обязательно для placement new
 
 using namespace std;
+bool tryInputNumber(int& result)
+{
+	string input = "";
+	char ch;
+	while (true)
+	{
+		ch = _getch();
+
+		if (ch == 27)
+			return false;
+
+		if (ch == 13)
+		{ // 13 — это код клавиши Enter
+			if (input.empty())
+				continue; // Не даем нажать Enter на пустой строке
+			cout << endl;
+			result = stoi(input); // Преобразуем накопленную строку в число
+			return true;
+		}
+
+		if (ch == 8)
+		{ // 8 — это Backspace
+			if (!input.empty())
+			{
+				input.pop_back();
+				cout << "\b \b"; // Удаляем символ из консоли визуально
+			}
+		}
+		else if (isdigit(ch))
+		{ // Проверяем, что нажата цифра
+			input += ch;
+			cout << ch; // Выводим цифру на экран
+		}
+	}
+}
+bool tryInputDouble(double& result) 
+{
+	string input = "";
+	char ch;
+	bool dotPointed = false; // Флаг: была ли уже поставлена точка
+
+	while (true) 
+	{
+		ch = _getch();
+
+		// 1. Выход по Esc
+		if (ch == 27) return false;
+
+		// 2. Завершение по Enter
+		if (ch == 13) 
+		{
+			if (input.empty() || input == "." || input == "-") 
+				continue;
+			cout << endl;
+			result = atof(input.c_str()); // Преобразуем строку в double
+			return true;
+		}
+
+		// 3. Удаление (Backspace)
+		if (ch == 8) 
+		{
+			if (!input.empty()) 
+			{
+				if (input.back() == '.') dotPointed = false; // Если удалили точку, разрешаем её снова
+				input.pop_back();
+				cout << "\b \b";
+			}
+		}
+
+		// 5. Дробная часть (точка или запятая)
+		else if ((ch == '.' || ch == ',') && !dotPointed) 
+		{
+			// Разрешаем точку, только если её еще нет
+			// (в C++ stod понимает только точку, поэтому всегда записываем её)
+			input += ',';
+			dotPointed = true;
+			cout << (char)ch; // Выводим то, что нажал пользователь
+		}
+
+		// 6. Цифры
+		else if (isdigit(ch)) 
+		{
+			input += ch;
+			cout << ch;
+		}
+	}
+}
+bool tryInputCharArray(char* result, int maxSize) {
+	int currentLen = 0;
+	int ch;
+
+	// Очищаем массив перед началом ввода
+	result[0] = '\0';
+
+	while (true) {
+		ch = _getch(); // Читаем код клавиши
+
+		// 1. Обработка Esc
+		if (ch == 27) {
+			return false;
+		}
+
+		// 2. Обработка Enter
+		if (ch == 13) {
+			if (currentLen == 0) continue; // Не пускаем пустую строку
+			cout << endl;
+			result[currentLen] = '\0'; // Завершаем строку нуль-терминатором
+			return true;
+		}
+
+		// 3. Обработка Backspace
+		if (ch == 8) {
+			if (currentLen > 0) {
+				currentLen--;
+				result[currentLen] = '\0';
+				cout << "\b \b"; // Затираем в консоли
+			}
+		}
+		// 4. Обработка спец. клавиш (стрелки и т.д.)
+		else if (ch == 0 || ch == 224) {
+			_getch(); // Пропускаем второй код
+		}
+		// 5. Печатаемые символы (с проверкой на размер массива)
+		else if (ch >= 32) {
+			// Проверяем, осталось ли место в массиве (учитываем 1 байт под '\0')
+			if (currentLen < maxSize - 1) {
+				result[currentLen] = (char)ch;
+				currentLen++;
+				cout << (char)ch;
+			}
+		}
+	}
+}
 // Структура "автомобиль"
 struct Auto
 {
 	// Поля марки и комфортности авто
-	char mark[20], comfortability[18];
+	char mark[20], comfortability[20];
 	// Поля цены и расхода топлива на 100 км
 	double price, fconsumption;
 	// Поле надёжности авто, измеряемое количеством лет
 	int reliability;
 	// Функция ввода данных для нового автомобиля
-	void AutoInput()
+	bool AutoInput()
 	{
-		// Цикл для проверки корректности вводимых значений
-		while (true)
+		int exit = 1;
+		do
 		{
-			cout << "\033[2J\033[1;1H";
-			cout << "Введите следующую информацию:\n";
-			cout << "Цена автомобиля\n";
-			if (cin >> this->price)
-				break;
-			else
+			switch (exit)
 			{
-				cout << "\033[2J\033[1;1H" << "Введены некорректные значения, введите ещё раз";
-				_getch();
-				// Очистка поля ввода данных
-				cin.clear();
-				cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
-			}
-		}
-		// Очистка поля ввода данных
-		cin.clear();
-		cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
-		// Цикл для проверки корректности вводимых значений
-		while (true)
-		{
-			cout << "\033[2J\033[1;1H";
-			cout << "Введите следующую информацию:\n";
-			cout << "Марка автомобиля\n";
-			if (cin.getline(this->mark, 20))
+			case 1:
 			{
-				break;
+				cout << "\033[2J\033[1;1H";
+				cout << "Введите следующую информацию:\n";
+				cout << "Цена автомобиля\n";
+				if (!tryInputDouble(this->price))
+					return false;
+				exit++;
 			}
-			else
+			case 2:
 			{
-				cout << "\033[2J\033[1;1H" << "Введены некорректные значения, введите ещё раз";
-				_getch();
-				cin.clear();
+				cout << "\033[2J\033[1;1H";
+				cout << "Введите следующую информацию:\n";
+				cout << "Марка автомобиля\n";
+				if (!tryInputCharArray(this->mark, 20))
+				{
+					exit--;
+					break;
+				}
+				exit++;
 			}
-		}
-		// Цикл для проверки корректности вводимых значений
-		while (true)
-		{
-			cout << "\033[2J\033[1;1H";
-			cout << "Введите следующую информацию:\n";
-			cout << "Количество лет безотказной работы (надёжность автомобиля)\n";
-			if (cin >> this->reliability)
-				break;
-			else
+			case 3:
 			{
-				cout << "\033[2J\033[1;1H" << "Введены некорректные значения, введите ещё раз";
-				_getch();
-				// Очистка поля ввода данных
-				cin.clear();
-				cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
+				cout << "\033[2J\033[1;1H";
+				cout << "Введите следующую информацию:\n";
+				cout << "Количество лет безотказной работы (надёжность автомобиля)\n";
+				if (!tryInputNumber(this->reliability))
+				{
+					exit--;
+					break;
+				}
+				exit++;
 			}
-		}
-		// Очистка поля ввода данных
-		cin.clear();
-		cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
-		// Цикл для проверки корректности вводимых значений
-		while (true)
-		{
-			cout << "\033[2J\033[1;1H";
-			cout << "Укажите степень комфортности данного автомобиля:\n";
-			cout << "1.Отличная\n";
-			cout << "2.Хорошая\n";
-			cout << "3.Удовлетворительная\n";
-			if (_getch() == 49)
+			case 4:
 			{
-				strcpy_s(this->comfortability, "Отличная");
-				break;
+				cout << "\033[2J\033[1;1H";
+				cout << "Укажите степень комфортности данного автомобиля:\n";
+				cout << "1.Отличная\n";
+				cout << "2.Хорошая\n";
+				cout << "3.Удовлетворительная\n";
+				int choice;				
+				if (tryInputNumber(choice))
+				{
+					if (choice == 1)
+					{
+						strncpy_s(this->comfortability, "Отличная", 18);						
+					}
+					else if (choice == 2)
+					{
+						strncpy_s(this->comfortability, "Хорошая", 18);						
+					}
+					else if (choice == 3)
+					{
+						strncpy_s(this->comfortability, "Удовлетворительная", 18);						
+					}
+					else
+						break;
+				}
+				else
+				{
+					exit--;
+					break;
+				}
+				exit++;
 			}
-			else if (_getch() == 50)
+			case 5:
 			{
-				strcpy_s(this->comfortability, "Хорошая");
-				break;
+				cout << "\033[2J\033[1;1H";
+				cout << "Введите следующую информацию:\n";
+				cout << "Расход топлима на 100 км\n";
+				if (!tryInputDouble(this->fconsumption))
+				{
+					exit--;
+					break;
+				}
+				exit++;
 			}
-			else if (_getch() == 51)
-			{
-				strcpy_s(this->comfortability, "Удовлетворительная");
-				break;			
 			}
-		}
-		cin.clear();
-		// Цикл для проверки корректности вводимых значений
-		while (true)
-		{
-			cout << "\033[2J\033[1;1H";
-			cout << "Введите следующую информацию:\n";
-			cout << "Расход топлима на 100 км\n";
-			if (cin >> this->fconsumption)
-				break;
-			else
-			{
-				cout << "\033[2J\033[1;1H" << "Введены некорректные значения, введите ещё раз";
-				_getch();
-				// Очистка поля ввода данных
-				cin.clear();
-				cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
-			}
-		}
-		cin.clear();
+		} while (exit < 6);
+		return true;
 	}
 	// Конструктор по умолчанию
 	Auto()
-	{		
-		this->price = NULL;
-		this->fconsumption = NULL;
-		this->reliability = NULL;
+	{
+		this->price = 0.0;
+		this->fconsumption = 0.0;
+		this->reliability = 0;
 	}
 	Auto(double priceNew, double fconsumptionNew, int reliabilityNew)
-	{		
+	{
 		this->price = priceNew;
 		this->fconsumption = fconsumptionNew;
 		this->reliability = reliabilityNew;
 	}
 	// Конструктор с переданными параметрами
-	Auto(char markNew[], char comfortabilityNew[], double priceNew, double fconsumptionNew, int reliabilityNew)
+	Auto(string markNew, string comfortabilityNew, double priceNew, double fconsumptionNew, int reliabilityNew)
 	{
-		strcpy_s(this->mark,markNew);
-		strcpy_s(this->comfortability, comfortabilityNew);
+		// strncpy_s(куда, откуда, сколько байт максимум)
+		strncpy_s(this->mark, markNew.c_str(), 20);		
+		strncpy_s(this->comfortability, comfortabilityNew.c_str(), 18);		
 		this->price = priceNew;
 		this->fconsumption = fconsumptionNew;
 		this->reliability = reliabilityNew;
@@ -156,7 +276,7 @@ struct Node
 	// Указатели на предыдущий и на следующ ий элемент в списке 
 	Node* prev, * next;
 	// Конструктор элемента
-	Node(Auto data)
+	Node(const Auto& data)
 	{
 		this->data = data;
 		this->prev = NULL;
@@ -175,15 +295,18 @@ public:
 	List()
 	{
 		this->head = NULL;
-			this->tail = NULL;
+		this->tail = NULL;
 	}
 	// Функция добавления нового элемента в начало списка
 	Node* push_front(Auto data)
 	{
 		// Выделяем место в памяти под новый элемент и записываем в указатель (ptr)
 		Node* ptr = (Node*)malloc(sizeof(Node));
-		//Записываем данные        
-		ptr->data = data;
+		if (ptr != NULL) {
+			// 2. Вызываем конструктор вручную в выделенной памяти (placement new)
+			// Это инициализирует строки mark и comfortability корректно
+			new (ptr) Node(data);
+		}
 		// Помещаем в указатель на предыдущий элемент указатель на крайний элемент списка 
 		ptr->next = head;
 		// Если в списке есть первый элемент
@@ -203,9 +326,12 @@ public:
 	{
 		// Выделяем место в памяти под новый элемент и записываем в указатель (ptr)
 		Node* ptr = (Node*)malloc(sizeof(Node));
+		if (ptr != NULL) {
+			// 2. Вызываем конструктор вручную в выделенной памяти (placement new)
+			// Это инициализирует строки mark и comfortability корректно
+			new (ptr) Node(data);
+		}
 		ptr->next = NULL;
-		//Записываем данные        
-		ptr->data = data;
 		// Помещаем в указатель на предыдущий элемент указатель на крайний элемент списка 
 		ptr->prev = tail;
 		// Если в списке есть крайний элемент
@@ -343,7 +469,7 @@ public:
 			cout << ptr->data.fconsumption;
 			cout.width(15);
 			cout.fill(' ');
-			cout << fixed << setprecision(2) << ptr->data.price << "\n";
+			cout << fixed << setprecision(3) << ptr->data.price << "\n";
 			i++;
 		}
 	}
@@ -405,8 +531,11 @@ public:
 			return push_front(data);
 		// Выделяем память под новый элемент и записываем указатель на эту память
 		Node* ptr = (Node*)malloc(sizeof(Node));
-		// Передаём данные в новую запись
-		ptr->data = data;
+		if (ptr != NULL) {
+			// 2. Вызываем конструктор вручную в выделенной памяти (placement new)
+			// Это инициализирует строки mark и comfortability корректно
+			new (ptr) Node(data);
+		}
 		// Меняем местами указатели
 		ptr->prev = left;
 		ptr->next = right;
@@ -420,8 +549,11 @@ public:
 	{
 		// Выделяем память под временный элемент и записываем указатель на эту память		
 		Node* temp = (Node*)(malloc(sizeof(Node)));
-		// Передаём в него данные
-		temp->data = first->data;
+		if (temp != NULL) {
+			// 2. Вызываем конструктор вручную в выделенной памяти (placement new)
+			// Это инициализирует строки mark и comfortability корректно
+			new (temp) Node(first->data);
+		}	
 		// Меняем их местави
 		first->data = second->data;
 		second->data = temp->data;
@@ -529,7 +661,7 @@ List filter(List& list, bool(*func)(Node*, Node*), double item)
 	List result;
 	int i = 0;
 	Node* temp = (Node*)(malloc(sizeof(Node)));
-	temp->data = { item,item,(int)item};
+	temp->data = { item,item,(int)item };
 	// Поэлементно проходим список
 	for (Node* ptr = list.head; ptr != NULL; ptr = ptr->next)
 	{
@@ -621,7 +753,7 @@ bool AscByReliability(Node* a, Node* b)
 bool DescByMark(Node* a, Node* b)
 {
 	string strA = a->data.mark;
-	string strB = b->data.mark;	
+	string strB = b->data.mark;
 	transform(strA.begin(), strA.end(), strA.begin(), tolower);
 	transform(strB.begin(), strB.end(), strB.begin(), tolower);
 	return strA > strB;
@@ -770,7 +902,7 @@ int main()
 					cout << "2. Искать по характеристикам\n";
 					switch (_getch())
 					{
-						// Поиск по тексту
+						// Поиск по марке
 					case 49:
 					{
 						string s;
@@ -1217,9 +1349,9 @@ int main()
 		case 50:
 		{
 			// Вызываем функцию добавления и вручную вводим все данные
-			car.AutoInput();
-			// Записанный пк добавляем в список
-			list.push_back(car);
+			if (car.AutoInput())
+				// Записанный пк добавляем в список
+				list.push_back(car);
 			// Возвращаемся в главное меню
 			menu = 2;
 			break;
@@ -1234,8 +1366,15 @@ int main()
 				list.Show();
 				cout << "Введите порядковый номер записи, которую вы хотите изменить:\n";
 				// Проверка на корректность введённых данных
-				if (cin >> menu && menu <= list.count && menu > 0)
+				if (!tryInputNumber(menu))
+				{
+					menu = 27;
 					break;
+				}
+				else if (menu <= list.count && menu > 0)
+				{
+					break;
+				}
 				else
 				{
 					cout << "\033[2J\033[1;1H" << "Неккоректные данные! Введите снова";
@@ -1244,27 +1383,37 @@ int main()
 					cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
 				}
 			}
-			// Вводим новые данные для выбранной записи
-			car.AutoInput();
-			// Удаляем выбранную запись
-			list.erase(menu - 1);
-			// Вставляем на её место новую
-			list.insert(menu - 1, car);
-			menu = NULL;
-			cout << "Для продолжения нажмите любуе клавишу";
-			_getch();
+			if (menu != 27)
+			{
+				// Вводим новые данные для выбранной записи
+				if (car.AutoInput())
+				{
+
+					// Удаляем выбранную запись
+					list.erase(menu - 1);
+				// Вставляем на её место новую
+				list.insert(menu - 1, car);
+				cout << "Для продолжения нажмите любуе клавишу";
+				_getch();
+				}
+			}
+				menu = NULL;
 			break;
 		}
 		// DELETE
 		case 52:
 		{
-			menu = NULL;
 			// Цикл для проверки вводимых значений
 			while (true)
 			{
 				list.Show();
 				cout << "Введите порядковый номер записи, которую вы хотите удалить:\n";
-				if ((cin >> menu && menu <= list.count && menu > 0))
+				if (!tryInputNumber(menu))
+				{
+					menu = 27;
+					break;
+				}
+				else if ( menu <= list.count && menu > 0)
 				{
 					break;
 				}
@@ -1281,9 +1430,10 @@ int main()
 				list.erase(menu - 1);
 				menu = NULL;
 				cout << "\033[2J\033[1;1H"; // Очистка консоли
-				cout << "Для продолжения нажмите любуе клавишу";
+				cout << "Для продолжения нажмите любую клавишу";
 				_getch();
 			}
+			menu = NULL;
 			break;
 		}
 		// Выход из приложения (27 — Esc)
