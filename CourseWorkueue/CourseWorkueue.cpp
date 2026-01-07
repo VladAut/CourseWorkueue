@@ -1075,7 +1075,7 @@ void ComplexSearch(List& list)
 		system("cls");
 		cout << "ШАГ 3: Введите минимальную надёжность (лет) (Esc - пропустить): ";
 		if (tryInputDouble(inputNum))
-			result = search(result, inputNum);
+			result = filter(result, DescByReliability, inputNum);
 	}
 	// ШАГ 4: Фильтр по стоимости
 	if (result.count > 0)
@@ -1083,7 +1083,7 @@ void ComplexSearch(List& list)
 		system("cls");
 		cout << "ШАГ 4: Введите максимальную стоимость (Esc - пропустить): ";
 		if (tryInputDouble(inputNum))
-			result = search(result, inputNum);
+			result = filter(result, AscByPrice, inputNum);
 	}
 	// ШАГ 5: Фильтр по расходу топлива (ВОТ ОН)
 	if (result.count > 0)
@@ -1092,7 +1092,7 @@ void ComplexSearch(List& list)
 		cout << "ШАГ 5: Введите максимально допустимый расход (л/100км) (Esc - пропустить): ";
 		if (tryInputDouble(inputNum))
 		{
-			result = search(result, inputNum);
+			result = filter(result, AscByFuel, inputNum);
 		}
 	}
 	// ИТОГОВЫЙ ВЫВОД
