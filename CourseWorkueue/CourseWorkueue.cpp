@@ -104,50 +104,53 @@ bool tryInputDouble(double& result)
 	}
 }
 bool tryInputCharArray(char* result, int maxSize) {
-	int currentLen = 0;
-	wint_t ch; // Используем широкий тип для поддержки кириллицы
+    // 0. Настройка для работы с кириллицей в консоли
+    setlocale(LC_ALL, "RU"); 
+    SetConsoleCP(1251); 
+    SetConsoleOutputCP(1251);
 
-	result[0] = '\0';
+    int currentLen = 0;
+    wint_t ch;
 
-	while (true) {
-		ch = _getwch(); // Читаем широкий символ (работает с RU/EN)
+    result[0] = '\0';
 
-		// 1. Обработка Esc
-		if (ch == 27) return false;
+    while (true) {
+        ch = _getwch(); 
 
-		// 2. Обработка Enter
-		if (ch == 13) {
-			if (currentLen == 0) continue;
-			cout << endl;
-			result[currentLen] = '\0';
-			return true;
-		}
+        if (ch == 27) return false; // Esc
+        if (ch == 13) { // Enter
+            if (currentLen == 0) continue;
+            cout << endl;
+            result[currentLen] = '\0';
+            return true;
+        }
+        if (ch == 8) { // Backspace
+            if (currentLen > 0) {
+                currentLen--;
+                cout << "\b \b";
+            }
+            continue;
+        }
+        
+        // Игнорируем спецклавиши
+        if (ch == 0 || ch == 0xE0) {
+            _getwch(); 
+            continue;
+        }
 
-		// 3. Обработка Backspace
-		if (ch == 8) {
-			if (currentLen > 0) {
-				currentLen--;
-				result[currentLen] = '\0';
-				cout << "\b \b";
-			}
-		}
-		// 4. Игнорируем функциональные клавиши (стрелки и т.д.)
-		else if (ch == 0 || ch == 224 || ch == 0xE0) {
-			_getwch(); // Пропускаем второй код
-		}
-		// 5. Печатаемые символы
-		else if (iswprint(ch)) {
-			if (currentLen < maxSize - 1) {
-				// Преобразуем широкий символ обратно в char для записи в массив
-				// В Windows с русской локалью это сработает корректно
-				result[currentLen] = (char)ch;
+        // 5. Обработка печатаемых символов
+		if (currentLen < maxSize - 1) {
+			char mbc;
+			int length;
+			// Безопасная конвертация: 
+			// &length — сколько байт записано, &mbc — куда, 1 — размер буфера, ch — символ
+			if (wctomb_s(&length, &mbc, 1, ch) == 0 && length > 0) {
+				result[currentLen] = mbc;
 				currentLen++;
-
-				// Чтобы символ отобразился корректно, выводим его через wcout или printf
-				printf("%c", (char)ch);
+				_putwch(ch);
 			}
 		}
-	}
+    }
 }
 // Структура "автомобиль"
 struct Auto
